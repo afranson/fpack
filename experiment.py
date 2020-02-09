@@ -36,34 +36,20 @@ show_help = True
 # Helper Functions #
 
 if show_help:
-    print("fpack version 0.40")
-    print("Remove help via fp.show_help=False")
-    print("Most of the fpack module's functionality can be found from")
-    print("dir(fp) and dir(fp.Experiment).")
-    print("If you are using IPython or Jupyer, then further function descriptions")
-    print("can be found via fp.function? and fp.function?? (or fp.Experiment.function?)")
-    print("Finally, source code can be found at fp.__file__")
-    print("")
-    print("Begin by creating an Experiment.")
-    print("exp = fp.Experiment(), there are other, more specific types as well")
+    print(
+        '''
+        fpack version 0.40
+        Remove help via 'fp.show_help=False'
+        Most of the fpack module's functionality can be found from \
+        'dir(fp)' and 'dir(fp.Experiment)'.
+        If you are using IPython or Jupyer, then further function descriptions \
+        can be found via 'fp.function?' and 'fp.function??' (or 'fp.Experiment.function?').
+        Finally, source code can be found at 'print(fp.__file__)'
 
-def rename_files(base_directory, regex, repl, test=True):
-    """Renames files in the base_directory. Uses regular expressions via
-    re.sub(regex, repl, filename) to replace and rearrange the filename.
-
-    """
-    files = os.listdir(base_directory)
-    pattern = re.compile(regex)
-    if test:
-        print("Set test=False and rerun to commit to filename changes.")
-
-    for f in files:
-        old_f = base_directory + os.sep + f
-        new_f = pattern.sub(repl, old_f)
-        if test:
-            print(f"Will rename {old_f} to {new_f}.")
-        else:
-            os.rename(old_f, new_f)
+        Begin by creating an Experiment.
+        'exp = fp.Experiment()', there are other, more specific types as well.
+        '''
+    )
 
 
 def show_files(base_directory, *regexs, show_all=False):
@@ -175,8 +161,9 @@ class Scan:
 
 
 class Experiment:
-    """Base class to inheret from to create more specific measurement
-    classes from.
+    """Base class to inheret from to create more specific measurement classes.
+    Easily load data by setting the defaults to sensible values.
+
     """
 
     def __init__(
@@ -199,9 +186,12 @@ class Experiment:
         self.scans = list()
         self.storage = dict()
         if show_help:
-            print("Now add files to the experiment.")
-            print("exp.load_files('dir', 'regex match')")
-
+            print(
+                '''
+                Now add files to the experiment.
+                exp.load_files(r"path/to/dir", r"[regex]*.[to\d]?(_|-)[match]+")
+                '''
+            )
     def __len__(self):
         return len(self.scans)
 
@@ -381,7 +371,7 @@ class Experiment:
         read_files methods. Also allows for loading of a previous saved
         Experiment via 'dill_file'. It will try to load 'dill_file' first and
         then default to adding and reading files if that fails. Also accepts all
-        pandas.read_csv key work arguments for customized file reading.
+        pandas.read_csv key work arguments for highly customized file reading.
 
         """
         try:
@@ -407,12 +397,16 @@ class Experiment:
         if show:
             self.show_files()
         if show_help:
-            print("Now you can examine the loaded data, plot it, and extract it easily.")
-            print("The various exp.show_xxx() functions reveal info about loaded data.")
-            print("fp.plot_scans(exp) and the other fp.plot_xxx(exp) functions to plot.")
-            print("fp.plot_tailor() to modify plots (line types, fonts, legends, etc.)")
-            print("exp.get_xy_data() and other exp.get_xxx() to retrieve information")
-            print("from the Experiment.")
+            print(
+                '''
+                Now you can examine the loaded data, plot it, and extract it easily.
+                The various exp.show_xxx() functions reveal info about loaded files.
+                fp.plot_scans(exp) and the other fp.plot_xxx(exp) functions to plot.
+                fp.plot_tailor() to modify plots (line types, fonts, legends, etc.)
+                exp.get_xy_data() and other exp.get_xxx() to retrieve information
+                from the Experiment.
+                '''
+            )
 
     def set_axes(self, *axis_labels):
         """Overrides the axes of the Experiment in the event of poor default
@@ -452,7 +446,7 @@ class Experiment:
         )
         print()
 
-    def show_info(self, *file_numbers, rows=None, view=True):
+    def show_files_info(self, *file_numbers, rows=None, view=True):
         """Shows information stored at the beginning of a file.
 
         """
@@ -503,7 +497,7 @@ class Experiment:
                 print(file_strings[n])
             print("|" + "-" * (25 + 19 * len(rows[0])) + "|")
 
-    def show_data(self, file_number, num_rows=21):
+    def show_file_data(self, file_number, num_rows=21):
         """Prints the first 'num_rows' of data loaded into the Experiment for
         the specified 'file_number'.
 
@@ -613,32 +607,31 @@ class Experiment:
         fit_param_indexes=None,
         return_file_numbers=None,
     ):
-        """Extracts metadata from the filename and info of scans and prints it
-        out in the format specified by 'repl' using re.sub(regex,
-        repl, metadata). See re.sub() documentation for more
-        details. Also can extract one or several fit_params by index.
+        """Extracts metadata from the filename and info of scans and prints it out in
+        the format specified by 'repl' using re.sub(regex, repl, metadata). See
+        re.sub() documentation for more details. Also can extract one or several
+        fit_params by index.
 
-        Quick, basic usage: filename="filename_freq_9.445GHz.txt". To
-        extract the '9.445', the default will work fine, it extracts
-        all numbers from the metadata, you just have to access the
-        correct number via match_number. Another way would be
-        regex=".*?freq_([\\d\\.]+).*" with repl=r"\1".
+        Quick, basic usage: filename="filename_freq_9.445GHz.txt". To extract
+        the "9.445", the default will work fine, it extracts all numbers from
+        the metadata, you just have to access the correct number via
+        match_number. Another way would be regex=r".*?freq_([\d\.]+).*" with
+        repl=r"\1".
 
-        You have to match everything, hence the '.*?' at the beginning
-        and the '.*' at the end. 'freq_' gives the regex a position in
-        the string to start extracting from. Parenthesis capture the
-        pattern inside them - each set of parenthesis can be recalled
-        using the appropriate '\\#' starting with 1 for the 1st
-        set. [\\d\\.]+ will match all numbers and periods found after
-        the 'freq_' string, in this case, '9.445'. Since it is in
-        parenthesis, it will be capture group 1 and can be recalled by
-        repl=r"\1". To get "9.445 GHz" as the result, this can be
-        extended to regex=".*?freq_([\\d\\.]+)(GHz).*" with repl=r"\1 \2".
+        You have to match everything, hence the ".*?" at the beginning and the
+        ".*" at the end. "freq_" gives the regex a position in the string to
+        start extracting from. Parentheses capture the pattern inside them -
+        each set of parentheses can be recalled using the appropriate r"\#"
+        starting with 1 for the 1st set (i.e. \1). "[\d\.]+" will match all
+        numbers and periods found after the "freq_" string, in this case,
+        "9.445". Since it is in parenthesis, it will be capture group 1 and can
+        be recalled by repl=r"\1". To get "9.445 GHz" as the result, this can be
+        extended to regex=r".*?freq_([\d\.]+)(GHz).*" with repl=r"\1 \2" or done
+        manually via repl=r"\1 GHz".
 
-        If multiple metadata fields match (filename and an info
-        field), then 'match_number' breaks the tie and lets you choose
-        which one you want. This can be avoided by careful selection
-        of your regex, however.
+        If multiple metadata fields match (filename and an info field), then
+        'match_number' breaks the tie and lets you choose which one you want.
+        This can be avoided by careful selection of your regex, however.
 
         """
         file_numbers = self.check_file_numbers(file_numbers)
@@ -810,33 +803,33 @@ class PNA_Experiment(Experiment):
             default_sep="\t",
         )
 
-
-test_exp = Experiment()
-test_exp.add_scan(
-    filename=(
-        r"C:\Users\frans\Documents\Org_Research_Notebook"
-        r"\Written_8.83V_and_stuff_abo6.6 GHzdomness.ascii"
-    ),
-    info=[
-        "Current (A): 5\n",
-        "Voltage (V): 13\n",
-        "Field (G): 3500.23434\n",
-        "Sweep Direction: Up\n",
-    ],
-    axes=["Ax0", "Ax1", "Ax2"],
-    data=np.array([[1, 2, 3], [1, 2, 3], [7, 8, 9]]),
-)
-test_exp.add_scan(
-    filename=(
-        r"C:\Users\frans\Documents\Org_Research_Notebook"
-        r"\Written_4.77V with 9.83 GHz and whatever.txt"
-    ),
-    info=[
-        "Current (A): 5.5\n",
-        "Voltage (V): 42\n",
-        "Field (G): 3526.4\n",
-        "Sweep Direction: Down\n",
-    ],
-    axes=["Ax0", "Ax1", "Ax2"],
-    data=np.array([[4, 5, 6], [7, 8, 9], [12, 0, 4]]),
-)
+def loadtest():
+    test_exp = Experiment()
+    test_exp.add_scan(
+        filename=(
+            r"C:\Users\frans\Documents\Org_Research_Notebook"
+            r"\Written_8.83V_and_stuff_abo6.6 GHzdomness.ascii"
+        ),
+        info=[
+            "Current (A): 5\n",
+            "Voltage (V): 13\n",
+            "Field (G): 3500.23434\n",
+            "Sweep Direction: Up\n",
+        ],
+        axes=["Ax0", "Ax1", "Ax2"],
+        data=np.array([[1, 2, 3], [1, 2, 3], [7, 8, 9]]),
+    )
+    test_exp.add_scan(
+        filename=(
+            r"C:\Users\frans\Documents\Org_Research_Notebook"
+            r"\Written_4.77V with 9.83 GHz and whatever.txt"
+        ),
+        info=[
+            "Current (A): 5.5\n",
+            "Voltage (V): 42\n",
+            "Field (G): 3526.4\n",
+            "Sweep Direction: Down\n",
+        ],
+        axes=["Ax0", "Ax1", "Ax2"],
+        data=np.array([[4, 5, 6], [7, 8, 9], [12, 0, 4]]),
+    )

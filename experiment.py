@@ -38,7 +38,7 @@ show_help = True
 
 if show_help:
     print(
-        "fpack version 0.40\n"
+        "fpack version 0.50\n"
         "Remove help via 'fp.show_help=False'\n"
         "Most of the fpack module's functionality can be found from "
         "'dir(fp)' and 'dir(fp.Experiment)'. If you are using IPython "

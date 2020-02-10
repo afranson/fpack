@@ -52,15 +52,13 @@ fp.plot_fits(exp_1, fit_exp_1, waterfall=10)
 # underscore (_). Things in rfft_smoothing.py will then be accessible
 # via "import fpack fpack.function_from_rfft()".
 
-__all__ = ['experiment', 'plotting_core', 'lorentz_functions']
+__all__ = ['experiment',
+           'plotting_core',
+           'fitting_core',
+           'lorentz_functions',
+           ]
 
 from .experiment import *
 from .lorentz_functions import *
 from .plotting_core import *
 from .fitting_core import *
-
-# from fpack.core import *
-# from fpack.function_tools import *
-# from fpack.plotting_tools import *
-# from fpack.figure_tools import *
-# from fpack.fitting_tools import *

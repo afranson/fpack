@@ -167,7 +167,7 @@ def plot_tailor(
     if y_tick_labels:
         plt.gca().yaxis.set_ticklabels(y_tick_labels)
 
-    plt.ticklabel_format(style="sci", scilimits=(-2, 4), axis="both", useOffset=False)
+    plt.ticklabel_format(style="sci", scilimits=(-2, 4), axis="both", useOffset=False)  # noqa
     if x_label:
         plt.xlabel(x_label, fontsize=label_size)
     if y_label:
@@ -236,48 +236,49 @@ def plot_xvline(exp: Experiment, point_number=None, x_value=None):
         return i
 
 
-def plot_functions():
+def plot_package_help():
     print(
-        "Here are some of the usual functions used while \
-    making proffesional looking plots in python."
-    )
+        "Example of easy plotting with this package is:\n"
+        "fig = fp.figure() <= defaults to 2-column journal image at 150 dpi\n"
+        "fp.plot_scans(exp, *file_numbers (written as 1,2,3,...))\n"
+        "fp.plot_tailer(x_label=, y_label=, set_position=, ...)\n"
+        "fp.plot_scans(exp, *other_files, new_fig=False, new_ax=False)\n"
+        "fp.plot_tailer(legend=True, x_lim=, y_lim=, ...)\n\n"
+        "fp.plot_fits(exp, file_numbers)\n"
+        "fp.plot_tailer(x_tick_values=, x_tick_sides=, x_label_sides=)\n\n"
+        "fp.plot_metadata(exp, *file_numbers, x_regex=, y_regex=, etc.)")
+
+
+def plot_manual_guide():
     print(
-        "This assume 'import matplotlib.pyplot as plt' has already been \
-    entered.\n"
-    )
-    print("fig = plt.figure(figsize=(x, y), dpi=DPI)")
-    print("ax = plt.subplot(111, sharex=False, sharey=False)")
-    print("plt.xlabel('XLabel', fontsize=20)")
-    print("plt.ylabel('YLabel', fontsize=20)")
-    print(
+        "Here are some of the usual functions used while "
+        "making proffesional looking plots in python.\n"
+        "This assume 'import matplotlib.pyplot as plt' "
+        "has already been entered.\n"
+        "fig = plt.figure(figsize=(x, y), dpi=DPI)\n"
+        "ax = plt.subplot(111, sharex=False, sharey=False)\n"
+        "plt.xlabel('XLabel', fontsize=20)\n"
+        "plt.ylabel('YLabel', fontsize=20)\n"
         "plt.ticklabel_format(style='sci', scilimits=(-1,3),"
-        " axis='both', useOffset=False)"
-    )
-    print("plt.minorticks_on()")
-    print(
+        " axis='both', useOffset=False)\n"
+        "plt.minorticks_on()\n"
         "plt.legend(loc=0, fontsize=13, title_fontsize=15,"
-        " framealpha=1, title='Title')"
-    )
-    print("plt.grid(axis='both', which='both', alpha=0.25")
-    print("plt.plot(x_list, y_list, 'bo-', linewidth=1, markersize=1, alpha=1")
-    print("plt.text(x, y, 'text', fontsize=14)\n")
-    print(
+        "framealpha=1, title='Title')\n"
+        "plt.grid(axis='both', which='both', alpha=0.25)\n"
+        "plt.plot(x_list, y_list, 'bo-', linewidth=1, markersize=1, alpha=1)\n"
+        "plt.text(x, y, 'text', fontsize=14)\n"
         "ax.set_position([x, y, w, h]) -- allows manual placement"
-        " of axis within its figure"
-    )
-    print("plt.savefig('name', transparent=True, dpi=DPI)")
-    print("plt.gcf() -- get current figure || plt.gca() -- get current axis")
-    print(
+        " of axis within its figure\n"
+        "plt.savefig('name', transparent=True, dpi=DPI)\n"
+        "plt.gcf() -- get current figure || "
+        "plt.gca() -- get current axis\n"
         "fig.patches.extend([plt.Rectangle((x, y), w, h,"
         " fill=True, color='w', alpha=1, zorder=1000,"
-        " transform=fig.transFigure, figure=fig)])"
-    )
-    print("plt.rc('text', usetex=True) -- use LaTeX to render all text")
-    print("plt.rc('font', family='serif') -- font best matched to APL")
-    print(
+        " transform=fig.transFigure, figure=fig)])\n"
+        "plt.rc('text', usetex=True) -- use LaTeX to render all text"
+        "plt.rc('font', family='serif') -- font best matched to APL\n"
         "plt.rc('text.latex',"
-        r"preamble=r'\usepackage{siunitx}, \usepackage{mathptmx}')"
-    )
+        r"preamble=r'\usepackage{siunitx}, \usepackage{mathptmx}')")
 
 
 def _new_fig_andor_ax(new_fig=True, new_ax=False, figsize=(6.69, 4), dpi=150):
@@ -349,7 +350,7 @@ def plot_scans(
         if integrate:
             i_baseline = _xbaseline_to_ibaseline(x_data, xbaseline)
             y_data = np.cumsum(
-                y_data - np.average(y_data[i_baseline[0] : i_baseline[1]])
+                y_data - np.average(y_data[i_baseline[0]: i_baseline[1]])
             )
 
         if waterfall:
@@ -357,18 +358,21 @@ def plot_scans(
 
         if not (metadata_label is None):
             label = exp.get_metadata(
-                file_number, regex=metadata_label, repl=repl, match_number=match_number
+                file_number, regex=metadata_label, repl=repl,
+                match_number=match_number
             )
         else:
             label = f"File: {file_number}"
 
         ax.plot(
-            x_data[::skip_points], y_data[::skip_points], fmt, label=label, **plot_kw
+            x_data[::skip_points], y_data[::skip_points], fmt, label=label,
+            **plot_kw
         )
 
     if not (metadata_title is None):
         title = exp.get_metadata(
-            file_number, regex=metadata_title, repl=repl, match_number=match_number
+            file_number, regex=metadata_title, repl=repl,
+            match_number=match_number
         )
     else:
         title = None
@@ -487,9 +491,9 @@ def plot_guess_and_fit(
         )
         ibaseline = _xbaseline_to_ibaseline(x_data, xbaseline)
         ifit_range = _xbaseline_to_ibaseline(x_data, xfit_range)
-        y_baseline = np.average(y_data[ibaseline[0] : ibaseline[1]])
+        y_baseline = np.average(y_data[ibaseline[0]: ibaseline[1]])
         y_data = y_data - y_baseline
-        cut = cut_scale * np.std(y_data[ibaseline[0] : ibaseline[1]])
+        cut = cut_scale * np.std(y_data[ibaseline[0]: ibaseline[1]])
         # data = np.vstack((x_data, y_data))
         # dataT = data.T
         # cut_data = dataT[(data[1] >= cut) + (data[1] <= -cut)].T
@@ -511,8 +515,8 @@ def plot_guess_and_fit(
             label="Ignored Region",
         )
         plt.plot(
-            x_data[ibaseline[0] : ibaseline[1]],
-            y_data[ibaseline[0] : ibaseline[1]] + y_baseline,
+            x_data[ibaseline[0]: ibaseline[1]],
+            y_data[ibaseline[0]: ibaseline[1]] + y_baseline,
             "C4--",
             alpha=0.5,
             label="Baseline Data",
@@ -520,15 +524,15 @@ def plot_guess_and_fit(
         plt.autoscale(enable=False, axis="y")
         if derivative:
             plt.plot(
-                x_data[ifit_range[0] : ifit_range[1]],
-                deriv(x_data[ifit_range[0] : ifit_range[1]]) + y_baseline,
+                x_data[ifit_range[0]: ifit_range[1]],
+                deriv(x_data[ifit_range[0]: ifit_range[1]]) + y_baseline,
                 "C2:",
                 label="Spline",
             )
         else:
             plt.plot(
-                x_data[ifit_range[0] : ifit_range[1]],
-                integral(x_data[ifit_range[0] : ifit_range[1]]) + y_baseline,
+                x_data[ifit_range[0]: ifit_range[1]],
+                integral(x_data[ifit_range[0]: ifit_range[1]]) + y_baseline,
                 "C2:",
                 label="Spline",
             )
@@ -657,8 +661,8 @@ def plot_two_axes(
     x_column_1, y_column_1 = exp.check_xy_columns(x_column_1, y_column_1)
     x_column_2, y_column_2 = exp.check_xy_columns(x_column_2, y_column_2)
 
-    x_data1, y_data1 = exp.get_xy_data(file_1, x_column=x_column_1, y_column=y_column_1)
-    x_data2, y_data2 = exp.get_xy_data(file_2, x_column=x_column_2, y_column=y_column_2)
+    x_data1, y_data1 = exp.get_xy_data(file_1, x_column=x_column_1, y_column=y_column_1)  # noqa
+    x_data2, y_data2 = exp.get_xy_data(file_2, x_column=x_column_2, y_column=y_column_2)  # noqa
 
     fig = figure()
     ax1 = fig.add_subplot(211)
@@ -730,7 +734,9 @@ def normalize(y_data):
     return m * y_data + b
 
 
-def create_figure_grid(num_x, num_y, alpha, bbox=(0, 0, 1, 1), *, fig=plt.gcf()):
+def create_figure_grid(num_x, num_y, alpha, bbox=(0, 0, 1, 1), *, fig=None):  # noqa
+    if fig is None:
+        fig = plt.gcf()
     x_loc = np.linspace(bbox[0], bbox[2], num_x)
     y_loc = np.linspace(bbox[1], bbox[3], num_y)
     overview_plot = fig.add_subplot(111)
@@ -759,7 +765,8 @@ def get_scalebar_prop_width(
     return scale_prop_w
 
 
-def size_image_to_ratio(image, ratio, centers, pixel_width=None, pixel_height=None):
+def size_image_to_ratio(image, ratio, centers,
+                        pixel_width=None, pixel_height=None):
     """Returns a cropped image centered at 'centers', 'pixel_width' wide,
     and with the appropriate ratio of width to height.
     """
@@ -770,10 +777,10 @@ def size_image_to_ratio(image, ratio, centers, pixel_width=None, pixel_height=No
     else:
         raise ValueError(
             "Either pixel_width or pixel_height must be set."
-            "Currently their values are {} and {}.".format(pixel_width, pixel_height)
+            "Currently their values are {} and {}.".format(pixel_width, pixel_height)  # noqa
         )
     crop_widths = (centers[0] - pixel_width / 2, centers[0] + pixel_width / 2)
-    crop_heights = (centers[1] - pixel_height / 2, centers[1] + pixel_height / 2)
+    crop_heights = (centers[1] - pixel_height / 2, centers[1] + pixel_height / 2)  # noqa
     image = image.crop(
         (crop_widths[0], crop_heights[0], crop_widths[1], crop_heights[1])
     )

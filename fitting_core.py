@@ -13,15 +13,14 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks_cwt
 from scipy.interpolate import UnivariateSpline
-import concurrent
 
 
 def _get_auto_params(
     x, y, derivative=True, cut_scale=5, xbaseline=(None, None), smoothing=5
 ):
     ibaseline = _xbaseline_to_ibaseline(x, xbaseline)
-    y = y - np.average(y[ibaseline[0] : ibaseline[1]])
-    cut = cut_scale * np.std(y[ibaseline[0] : ibaseline[1]])
+    y = y - np.average(y[ibaseline[0]: ibaseline[1]])
+    cut = cut_scale * np.std(y[ibaseline[0]: ibaseline[1]])
     y_cut_data = y
     y_cut_data[(y <= cut) & (y >= -cut)] = 0
     cut_data = np.vstack((x, y_cut_data))
@@ -37,11 +36,11 @@ def _get_auto_params(
     try:
         derivs = [deriv2.derivatives(x_root)[1] for x_root in x_roots]
     except IndexError as e:
-        print(f"Failed to find the 1st element of the derivative of the spline at "
-              f"x_roots. x_roots value: {x_roots}. Try decreasing cut_scale or "
-              f"smoothing.")
+        print("Failed to find the 1st element of the derivative of the spline"
+              f" at x_roots. x_roots value: {x_roots}. Try decreasing"
+              " cut_scale or smoothing.")
         print(repr(e))
-    x_d = np.dstack((x_roots, derivs))[0][(derivs[0] > 0) :]
+    x_d = np.dstack((x_roots, derivs))[0][(derivs[0] > 0):]
     lorentzian_guesses = [
         (y1 - y0, (deriv(x0), 0, x1 - x0, (x1 + x0) / 2))
         for (x0, y0, x1, y1) in zip(*[np.nditer(x_d)] * 4)
@@ -69,14 +68,26 @@ def fit_fmr_absdisp(
     xfit_range=(None, None),
     **fit_kwargs,
 ):
-    """Fits curves to symmetric and antisymmetric components of a
-    lorentzian [derivative] signal.  *params should be [1, 2, 3, 4],
-    [5, 6, 7, 8], ...
+    """Fits curves to symmetric and antisymmetric components of a lorentzian
+    [derivative] signal. Detects and fits automatically to any number of
+    lorentzians by using the 'auto' kwarg. Set auto=# of lorentzians you expect.
+    i.e. auto=2 will fit to a maximum of 2 lorentzians. For manually fitting,
+    set auto=False (the default) and specify '*params' in the form [p1, p2, p3,
+    p4], [p5, p6, p7, p8], ... where inital guess parameters for each lorentzian
+    are organized as [absorption_amplitude, dispersion_amplitude, linewidth,
+    position]. Default behavior is to fit to lorentzian derivates; set
+    derivatives=False to fit to absorption lineshapes.
 
-    auto usage: set auto=# of lorentzians you expect. i.e. auto=2 will
-    fit curve to a maximum of 2 lorentzians.
-
-    """
+    For auto fitting:
+    xbaseline=(None, None)  => set this to the x-values that contain
+    your constant background.
+    cut_scale=5             => sets the size of the area that is
+    ignored by fitting.
+    smoothing=5             => sets how much noise in your signal is rejected.
+    If fits are poor, MODIFY THIS VALUE FIRST (try 0.01, try 200)
+    xfit_range=(None, None) => sets the x-values that contain the lorentzian(s)
+    you want to fit.
+    """  # noqa
     x_column, y_column = exp.check_xy_columns(x_column, y_column)
     x_data, y_data = exp.get_xy_data(
         file_number, x_column=x_column, y_column=y_column
@@ -105,7 +116,7 @@ def fit_fmr_absdisp(
             return offset1 + sum(
                 [
                     absorption_dispersion_derivative_mixed(
-                        x, *params1[(4 * n) : 4 * (n + 1)]
+                        x, *params1[(4 * n): 4 * (n + 1)]
                     )
                     for n in range(num_params)
                 ]
@@ -113,15 +124,15 @@ def fit_fmr_absdisp(
         else:
             return offset1 + sum(
                 [
-                    absorption_dispersion_mixed(x, *params1[(4 * n) : 4 * (n + 1)])
+                    absorption_dispersion_mixed(x, *params1[(4 * n): 4 * (n + 1)])  # noqa
                     for n in range(num_params)
                 ]
             )
 
     if xbaseline != (None, None):
         ibaseline = _xbaseline_to_ibaseline(x_data, xbaseline)
-        stddev = np.std(y_data[ibaseline[0] : ibaseline[1]])
-        err_list = stddev * np.ones(len(y_data[ifit_range[0] : ifit_range[1]]))
+        stddev = np.std(y_data[ibaseline[0]: ibaseline[1]])
+        err_list = stddev * np.ones(len(y_data[ifit_range[0]: ifit_range[1]]))
         absolute_sigma = True
     else:
         err_list = None
@@ -137,8 +148,8 @@ def fit_fmr_absdisp(
     }
     curve_fit_kwargs.update(fit_kwargs)
 
-    x_data_tofit = x_data[ifit_range[0] : ifit_range[1]]
-    y_data_tofit = y_data[ifit_range[0] : ifit_range[1]]
+    x_data_tofit = x_data[ifit_range[0]: ifit_range[1]]
+    y_data_tofit = y_data[ifit_range[0]: ifit_range[1]]
     try:
         fit_para, fit_cov = curve_fit(
             fit_function, x_data_tofit, y_data_tofit, **curve_fit_kwargs
@@ -170,10 +181,11 @@ def fit_fmr_several(
     smoothing=5,
     derivative=True,
     xfit_range=(None, None),
-    mt=False,
 ):
     """
-    method = 1 => auto_fitting using fit_fmr_absdisp
+    Fits several lorentzians with one of the methods specified.
+
+    method = 1 => auto_fitting using fit_fmr_absdisp (default)
     method = 2 => cwt to find peaks
     method = 3 => integrate and give peak (highest) value
     """
@@ -181,27 +193,9 @@ def fit_fmr_several(
 
     fit_params = []
     fit_covs = []
-    if method == 0 and mt:
-        executor = concurrent.futures.ProcessPoolExecutor(2)
-        futures = [
-            executor.submit(
-                fit_fmr_absdisp(
-                    exp,
-                    n,
-                    auto=auto,
-                    xbaseline=xbaseline,
-                    cut_scale=cut_scale,
-                    smoothing=smoothing,
-                    derivative=derivative,
-                    xfit_range=xfit_range,
-                )
-            )
-            for n in file_numbers
-        ]
-        concurrent.futures.wait(futures)
     for n in file_numbers:
         data_to_fit = exp.get_xy_data(n)
-        if method == 0 and not mt:
+        if method == 0:
             fit_fmr_absdisp(
                 exp,
                 n,
@@ -219,26 +213,24 @@ def fit_fmr_several(
                 data_to_fit[0],
                 np.cumsum(
                     data_to_fit[1]
-                    - np.average(data_to_fit[1][ibaseline[0] : ibaseline[1]])
+                    - np.average(data_to_fit[1][ibaseline[0]: ibaseline[1]])
                 ),
             )
             index_peaks = find_peaks_cwt(
                 integrated_data_to_fit[1], widths, min_snr=min_snr
             )
-            field_peaks = np.array([data_to_fit[0][index] for index in index_peaks])
+            field_peaks = np.array([data_to_fit[0][index] for index in index_peaks])  # noqa
             fit_params.append(field_peaks)
             fit_covs.append(0)
         elif method == 2:
             data_to_fit = exp.get_xy_data(n)
             ibaseline = _xbaseline_to_ibaseline(data_to_fit[0], xbaseline)
             integrated_data_to_fit = np.cumsum(
-                data_to_fit[1] - np.average(data_to_fit[1][ibaseline[0] : ibaseline[1]])
+                data_to_fit[1] - np.average(data_to_fit[1][ibaseline[0]: ibaseline[1]])  # noqa
             )
             field_pk = data_to_fit[0][integrated_data_to_fit.argsort()][-1]
             fit_params.append(field_pk)
             fit_covs.append(0)
-        elif mt:
-            pass
         else:
             raise ValueError(
                 "method value not recognized, "
@@ -251,7 +243,7 @@ def fit_fmr_several(
     return fit_params, fit_covs
 
 
-def show_fit_params(exp: Experiment, *file_numbers, window_width=50, cov=False):
+def show_fit_params(exp: Experiment, *file_numbers, window_width=50, cov=False):  # noqa
     file_numbers = exp.check_file_numbers(file_numbers)
     for n in file_numbers:
         params = exp.get_scan(n).fit_params
@@ -286,7 +278,7 @@ def show_fit_params(exp: Experiment, *file_numbers, window_width=50, cov=False):
             f'|{"Absorption Ampl":-^25}|{"Dispersion Ampl":-^25}'
             f'|{"Linewidth":-^25}|{"Position":-^25}|'
         )
-        print("".join(number_formats).format(*[i for h in fit_values[1:] for i in h]))
+        print("".join(number_formats).format(*[i for h in fit_values[1:] for i in h]))  # noqa
 
         if cov:
             print(

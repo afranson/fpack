@@ -20,11 +20,12 @@ fp.plot_tailor(x_label="this", grid=True, figsize=(15,5),
 fp.extract_data(exp_2_rotated, x_column=1, y_column=[4,5,6])
 """
 
-import numpy as np
-import pandas as pd
-#import dill
+
 import os
 import re
+import numpy as np
+import pandas as pd
+# import dill
 
 # Color definitions for terminal output
 BLUE = "\033[94m"
@@ -37,19 +38,16 @@ show_help = True
 
 if show_help:
     print(
-        '''
-        fpack version 0.40
-        Remove help via 'fp.show_help=False'
-        Most of the fpack module's functionality can be found from \
-        'dir(fp)' and 'dir(fp.Experiment)'.
-        If you are using IPython or Jupyer, then further function descriptions \
-        can be found via 'fp.function?' and 'fp.function??' (or 'fp.Experiment.function?').
-        Finally, source code can be found at 'print(fp.__file__)'
-
-        Begin by creating an Experiment.
-        'exp = fp.Experiment()', there are other, more specific types as well.
-        '''
-    )
+        "fpack version 0.40\n"
+        "Remove help via 'fp.show_help=False'\n"
+        "Most of the fpack module's functionality can be found from "
+        "'dir(fp)' and 'dir(fp.Experiment)'. If you are using IPython "
+        "or Jupyer, then further function descriptions can be found via "
+        "'fp.function?' and 'fp.function??' (or 'fp.Experiment.function?')."
+        " Finally, source code can be found at 'print(fp.__file__)'\n\n"
+        "Begin by creating an Experiment.\n"
+        "'exp = fp.Experiment()', there are other specific types as well."
+        )
 
 
 def show_files(base_directory, *regexs, show_all=False):
@@ -60,7 +58,7 @@ def show_files(base_directory, *regexs, show_all=False):
     advanced users can use one regex to match for any desired files. Entering no
     regex matches all files in that directory.
 
-    """
+    """  # noqa
     files = os.listdir(base_directory)
 
     if len(regexs) == 0:
@@ -187,11 +185,11 @@ class Experiment:
         self.storage = dict()
         if show_help:
             print(
-                '''
-                Now add files to the experiment.
-                exp.load_files(r"path/to/dir", r"[regex]*.[to\d]?(_|-)[match]+")
-                '''
+                "Now add files to the experiment."
+                "exp.load_files(r\"~/path/to/dir\" (or C:\\path\\to\\dir), "
+                "r\"[regex]*.[to\\d]?(_|-)[match]+\")"
             )
+
     def __len__(self):
         return len(self.scans)
 
@@ -281,7 +279,7 @@ class Experiment:
         More advanced users can use one regex to match for any desired files.
         Entering no regex matches all files in that directory.
 
-        """
+        """  # noqa
         files = os.listdir(base_directory)
 
         if len(regexs) == 0:
@@ -329,9 +327,9 @@ class Experiment:
             filename = self.get_scan(file_number).filename
             temp_header = []
             with open(filename, "r") as f:
-                temp_header = [f.readline() for _ in range(descriptive_rows + 1)]
+                temp_header = [f.readline() for _ in range(descriptive_rows + 1)]  # noqa
                 self.set_scan_params(file_number, info=temp_header)
-                _ = [f.readline() for _ in range(axis_label_row - descriptive_rows - 1)]
+                _ = [f.readline() for _ in range(axis_label_row - descriptive_rows - 1)]  # noqa
                 axes_line = f.readline()
                 if delim_whitespace:
                     axes = axes_line[:-1].split()
@@ -348,7 +346,7 @@ class Experiment:
                 try:
                     data = np.array(pd.read_csv(f, **read_csv_kwargs))
                 except pd.errors.ParserError as e:
-                    raise TypeError(f"pandas could not read file: {f}.\n{repr(e)}")
+                    raise TypeError(f"pandas could not read file: {f}.\n{repr(e)}")  # noqa
             if transpose:
                 self.set_scan_params(file_number, data=data.T)
             else:
@@ -373,7 +371,7 @@ class Experiment:
         then default to adding and reading files if that fails. Also accepts all
         pandas.read_csv key work arguments for highly customized file reading.
 
-        """
+        """  # noqa
         try:
             # self.load_exp(dill_file)
             raise FileNotFoundError
@@ -398,14 +396,18 @@ class Experiment:
             self.show_files()
         if show_help:
             print(
-                '''
-                Now you can examine the loaded data, plot it, and extract it easily.
-                The various exp.show_xxx() functions reveal info about loaded files.
-                fp.plot_scans(exp) and the other fp.plot_xxx(exp) functions to plot.
-                fp.plot_tailor() to modify plots (line types, fonts, legends, etc.)
-                exp.get_xy_data() and other exp.get_xxx() to retrieve information
-                from the Experiment.
-                '''
+                "Now you can examine, plot, "
+                "and extract the loaded data easily.\n"
+                "The various exp.show_xxx() functions "
+                "reveal info about loaded files.\n"
+                "fp.plot_scans(exp) and the other "
+                "fp.plot_xxx(exp) functions to plot.\n"
+                "fp.plot_package_help() for more info. \n"
+                "exp.get_xy_data() and other exp.get_xxx() "
+                "to retrieve information from the Experiment.\n"
+                "fp.fit_fmr_absdisp() and fp.fit_fmr_several()"
+                " will fit one or more scans manually or automatically.\n"
+                "fp.plot_fits() will plot fit(s) along with the data."
             )
 
     def set_axes(self, *axis_labels):
@@ -453,7 +455,7 @@ class Experiment:
         file_numbers = self.check_file_numbers(file_numbers)
         if rows is None:
             rows = list(range(len(self.get_scan(file_numbers[0]).info)))
-        rows = [rows[i : i + 3] for i in range(0, len(rows), 3)]
+        rows = [rows[i: i + 3] for i in range(0, len(rows), 3)]
         rows[-1] = (rows[-1] + [None] * 3)[:3]
 
         print("|" + "-" * (25 + 19 * len(rows[0])) + "|")
@@ -473,13 +475,13 @@ class Experiment:
 
         for file_num in file_numbers:
             scan = self.get_scan(file_num)
-            filename = re.search(r"\\[\w\.\s]*$", scan.filename).group()[1:]
+            filename = re.search(r"[\\/][\w\.\s]+$", scan.filename).group()[1:]
             filenames = []
             for n in range(len(rows)):
                 if n == 0:
                     filenames.append(filename[:18])
                 else:
-                    filenames.append(filename[18 + 23 * (n - 1) : 18 + 23 * n])
+                    filenames.append(filename[18 + 23 * (n - 1): 18 + 23 * n])
             file_strings = []
             file_info = f"|{file_num:4d}: {filenames[0]:^19.18}|"
             file_strings = [file_info] + [""] * (len(rows) - 1)
@@ -492,7 +494,7 @@ class Experiment:
                         pass
                     else:
                         row_info = self.get_scan(file_num).info[row]
-                        file_strings[n] += f"{row_info.split(':')[1][:-1]:<18.16}|"
+                        file_strings[n] += f"{row_info.split(':')[1][:-1]:<18.16}|"  # noqa
             for n, _ in enumerate(rows):
                 print(file_strings[n])
             print("|" + "-" * (25 + 19 * len(rows[0])) + "|")
@@ -504,7 +506,7 @@ class Experiment:
         """
         print("Data Preview:\n")
         print(
-            " ".join([f"{element:<16}" for element in self.get_scan(file_number).axes])
+            " ".join([f"{element:<16}" for element in self.get_scan(file_number).axes])  # noqa
         )
         for data_row in self.get_scan(file_number).data.T[0:num_rows]:
             try:
@@ -571,10 +573,9 @@ class Experiment:
                         values[n, m] = np.nan
         if len(file_numbers) == 1:
             return values[0]
-        else:
-            return values
+        return values
 
-    def _get_file_and_info_item(self, *file_numbers, regex, repl, match_number):
+    def _get_file_and_info_item(self, *file_numbers, regex, repl, match_number):  # noqa
         pattern = re.compile(regex)
         values = np.zeros(len(file_numbers), dtype='<U100')
         for n, file_num in enumerate(file_numbers):
@@ -633,10 +634,10 @@ class Experiment:
         'match_number' breaks the tie and lets you choose which one you want.
         This can be avoided by careful selection of your regex, however.
 
-        """
+        """  # noqa
         file_numbers = self.check_file_numbers(file_numbers)
         if not (fit_param_indexes is None):
-            return self._get_fit_params(*file_numbers, fit_param_indexes=fit_param_indexes)
+            return self._get_fit_params(*file_numbers, fit_param_indexes=fit_param_indexes)  # noqa
 
         if not (return_file_numbers is None):
             return list(file_numbers)
@@ -693,7 +694,7 @@ class Experiment:
         params = self.get_scan(file_number).fit_params
         return x_fit, func(x_fit, *params)
 
-    def get_xy_guess(self, file_number, x_fit=None, x_column=None, x_density=1):
+    def get_xy_guess(self, file_number, x_fit=None, x_column=None, x_density=1):  # noqa
         if x_fit is None:
             x, _ = self.get_xy_data(file_number, x_column=x_column)
             x_fit = np.linspace(x[0], x[-1], x_density * len(x))
@@ -701,7 +702,7 @@ class Experiment:
         params = self.get_scan(file_number).guess_params
         return x_fit, func(x_fit, *params)
 
-    def get_xy_werror(self, file_number, x_fit=None, x_column=None, x_density=1):
+    def get_xy_werror(self, file_number, x_fit=None, x_column=None, x_density=1):  # noqa
         if x_fit is None:
             x, _ = self.get_xy_data(file_number, x_column=x_column)
             x_fit = np.linspace(x[0], x[-1], x_density * len(x))
@@ -737,7 +738,7 @@ class EPR_Experiment(Experiment):
             default_sep=",",
         )
 
-    def normalize_frequency(self, *file_numbers, overwrite=False, desired_frequency=10):
+    def normalize_frequency(self, *file_numbers, overwrite=False, desired_frequency=10):  # noqa
         """Normalizes cavity EPR data to a certain frequency to account for
         frequency changes due returning of the cavity for different
         sample geometries.
@@ -803,33 +804,40 @@ class PNA_Experiment(Experiment):
             default_sep="\t",
         )
 
+
 def loadtest():
+    """
+    Loads a basic experiment into 'test_exp' for testing purposes.
+    """
     test_exp = Experiment()
     test_exp.add_scan(
         filename=(
-            r"C:\Users\frans\Documents\Org_Research_Notebook"
-            r"\Written_8.83V_and_stuff_abo6.6 GHzdomness.ascii"
+            r"/path/to/your/file"
+            r"/Written_8.83V_and_stuff_abo6.6 GHzdomness.ascii"
         ),
         info=[
             "Current (A): 5\n",
             "Voltage (V): 13\n",
             "Field (G): 3500.23434\n",
             "Sweep Direction: Up\n",
+            "Temperature(K): 273\n",
         ],
         axes=["Ax0", "Ax1", "Ax2"],
         data=np.array([[1, 2, 3], [1, 2, 3], [7, 8, 9]]),
     )
     test_exp.add_scan(
         filename=(
-            r"C:\Users\frans\Documents\Org_Research_Notebook"
-            r"\Written_4.77V with 9.83 GHz and whatever.txt"
+            r"/path/to/your/file"
+            r"/Written_4.77V with 9.83 GHz and whatever.txt"
         ),
         info=[
             "Current (A): 5.5\n",
             "Voltage (V): 42\n",
             "Field (G): 3526.4\n",
             "Sweep Direction: Down\n",
+            "Temperature(K): 77\n",
         ],
         axes=["Ax0", "Ax1", "Ax2"],
         data=np.array([[4, 5, 6], [7, 8, 9], [12, 0, 4]]),
     )
+    return test_exp

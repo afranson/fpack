@@ -240,7 +240,8 @@ def plot_package_help():
     print(
         "Example of easy plotting with this package is:\n"
         "fig = fp.figure() <= defaults to 2-column journal image at 150 dpi\n"
-        "fp.plot_scans(exp, *file_numbers (written as 1,2,3,...))\n"
+        "fp.plot_scans(exp, *file_numbers (written as 1,2,3,... or blank for"
+        "all files))\n"
         "fp.plot_tailer(x_label=, y_label=, set_position=, ...)\n"
         "fp.plot_scans(exp, *other_files, new_fig=False, new_ax=False)\n"
         "fp.plot_tailer(legend=True, x_lim=, y_lim=, ...)\n\n"

@@ -385,7 +385,7 @@ class Experiment:
                 self.set_scan_params(file_number, info=temp_header)
                 _ = [f.readline() for _ in range(axis_label_row - descriptive_rows - 1)]  # noqa
                 axes_line = f.readline()
-                if sep == "\s+":
+                if sep == "\s+":  # noqa
                     axes = axes_line[:-1].split(" ")
                 else:
                     axes = axes_line[:-1].split(sep)
@@ -787,7 +787,7 @@ class EPR_Experiment(Experiment):
             default_descriptive_rows=-1,
             default_axis_label_row=0,
             default_data_start_row=2,
-            default_sep="\s+",
+            default_sep="\s+",  # noqa
         )
 
     def normalize_frequency(self, *file_numbers, overwrite=False, desired_frequency=10):  # noqa

@@ -3,6 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 import datetime
+from .extractors import _get_smoothing, \
+    _get_cut, \
+    _x_to_index, \
+    _xbaseline_to_ibaseline
 
 
 def show():
@@ -11,7 +15,7 @@ def show():
     plt.show()
 
 
-def savefig(filename, transparent=True, dpi=600, **kwargs):
+def plot_savefig(filename, transparent=True, dpi=600, **kwargs):
     """Uses plt.savefig with better defaults.
 
     transparent = True : No white background behind figure.
@@ -122,7 +126,7 @@ def plot_tailor(
         legend = plt.legend(
             loc=legend_loc,
             fontsize=legend_size,
-            title_fontsize=legend_title_size,
+            # title_fontsize=legend_title_size,
             framealpha=legend_alpha,
             title=legend_title,
         )
@@ -182,27 +186,6 @@ def plot_tailor(
     plt.ylim(*y_lim)
 
 
-def _x_to_index(x_data, x_value, i=0):
-    if len(x_data) == 1:
-        return i
-    half = len(x_data) // 2
-    x_half = x_data[half]
-    if x_half == x_value:
-        return i
-    elif len(x_data) < 8:
-        diff = np.inf
-        result = 0
-        for n, x in enumerate(x_data):
-            if abs(x - x_value) < diff:
-                result = n
-                diff = diff
-        return i + result
-    elif x_value < x_half:
-        return _x_to_index(x_data[:half], x_value, i)
-    else:
-        return _x_to_index(x_data[half:], x_value, i + half)
-
-
 def get_index(data, x_value, row=0):
     """Accepts a dataset organized as [[x_data], [y_data_1], ... , [y_data_n]].
     Returns the index of the 'row'-th dataset that is closest to 'x_value'.
@@ -212,17 +195,6 @@ def get_index(data, x_value, row=0):
     except IndexError:
         search_data = data
     return _x_to_index(search_data, x_value)
-
-
-def _xbaseline_to_ibaseline(x_data, xbaseline):
-    if xbaseline[0] is None:
-        xbaseline = [x_data[0], xbaseline[1]]
-    if xbaseline[1] is None:
-        xbaseline = [xbaseline[0], x_data[-1]]
-    return (
-        _x_to_index(x_data, xbaseline[0]),
-        _x_to_index(x_data, xbaseline[1]),
-    )
 
 
 def plot_xvline(exp: Experiment, point_number=None, x_value=None):
@@ -455,52 +427,52 @@ def plot_guess_and_fit(
         y_column=y_column,
         linewidth=1,
     )
-    plot_scans(
-        exp,
-        file_number,
-        new_fig=False,
-        new_ax=False,
-        figsize=figsize,
-        waterfall=waterfall,
-        dpi=dpi,
-        fmt="C3-",
-        x_column=x_column,
-        fit=True,
-        x_density=x_density,
-        linewidth=1,
-    )
-    plt.gca().get_lines()[-1].set_zorder(10)
-    plot_scans(
-        exp,
-        file_number,
-        new_fig=False,
-        new_ax=False,
-        figsize=figsize,
-        waterfall=waterfall,
-        dpi=dpi,
-        fmt="C1-",
-        x_column=x_column,
-        guess=True,
-        x_density=x_density,
-        linewidth=1,
-    )
+    try:
+        plot_scans(
+            exp,
+            file_number,
+            new_fig=False,
+            new_ax=False,
+            figsize=figsize,
+            waterfall=waterfall,
+            dpi=dpi,
+            fmt="C3-",
+            x_column=x_column,
+            fit=True,
+            x_density=x_density,
+            linewidth=1,
+        )
+        plt.gca().get_lines()[-1].set_zorder(10)
+
+        plot_scans(
+            exp,
+            file_number,
+            new_fig=False,
+            new_ax=False,
+            figsize=figsize,
+            waterfall=waterfall,
+            dpi=dpi,
+            fmt="C1-",
+            x_column=x_column,
+            guess=True,
+            x_density=x_density,
+            linewidth=1,
+        )
+    except TypeError as e:
+        print(f"No fit data found\n{e}")
 
     if auto:
         x_column, y_column = exp.check_xy_columns(x_column, y_column)
         x_data, y_data = exp.get_xy_data(
             file_number, x_column=x_column, y_column=y_column
         )
+        smoothing = _get_smoothing(y_data, smoothing)
+        cut_range = _get_cut(x_data, y_data, xbaseline, cut_scale)
+        y_cut = np.copy(y_data)
+        y_cut[(y_data >= cut_range[0]) & (y_data <= cut_range[1])] = 0
+        cut_data = np.vstack((x_data, y_cut))
         ibaseline = _xbaseline_to_ibaseline(x_data, xbaseline)
         ifit_range = _xbaseline_to_ibaseline(x_data, xfit_range)
-        y_baseline = np.average(y_data[ibaseline[0]: ibaseline[1]])
-        y_data = y_data - y_baseline
-        cut = cut_scale * np.std(y_data[ibaseline[0]: ibaseline[1]])
-        # data = np.vstack((x_data, y_data))
-        # dataT = data.T
-        # cut_data = dataT[(data[1] >= cut) + (data[1] <= -cut)].T
-        y_cut_data = y_data
-        y_cut_data[(y_data <= cut) & (y_data >= -cut)] = 0
-        cut_data = np.vstack((x_data, y_cut_data))
         if not derivative:
             integral = UnivariateSpline(cut_data[0], cut_data[1], k=5)
             integral.set_smoothing_factor(smoothing)
@@ -509,15 +481,15 @@ def plot_guess_and_fit(
             deriv = UnivariateSpline(cut_data[0], cut_data[1], k=4)
             deriv.set_smoothing_factor(smoothing)
         plt.axhspan(
-            y_baseline - cut,
-            y_baseline + cut,
+            cut_range[0],
+            cut_range[1],
             color="k",
             alpha=0.3,
             label="Ignored Region",
         )
         plt.plot(
             x_data[ibaseline[0]: ibaseline[1]],
-            y_data[ibaseline[0]: ibaseline[1]] + y_baseline,
+            y_data[ibaseline[0]: ibaseline[1]],
             "C4--",
             alpha=0.5,
             label="Baseline Data",
@@ -526,14 +498,14 @@ def plot_guess_and_fit(
         if derivative:
             plt.plot(
                 x_data[ifit_range[0]: ifit_range[1]],
-                deriv(x_data[ifit_range[0]: ifit_range[1]]) + y_baseline,
+                deriv(x_data[ifit_range[0]: ifit_range[1]]),
                 "C2:",
                 label="Spline",
             )
         else:
             plt.plot(
                 x_data[ifit_range[0]: ifit_range[1]],
-                integral(x_data[ifit_range[0]: ifit_range[1]]) + y_baseline,
+                integral(x_data[ifit_range[0]: ifit_range[1]]),
                 "C2:",
                 label="Spline",
             )
@@ -735,7 +707,7 @@ def normalize(y_data):
     return m * y_data + b
 
 
-def create_figure_grid(num_x, num_y, alpha, bbox=(0, 0, 1, 1), *, fig=None):  # noqa
+def create_figure_grid(num_x, num_y, alpha=0.3, bbox=(0, 0, 1, 1), *, fig=None):  # noqa
     if fig is None:
         fig = plt.gcf()
     x_loc = np.linspace(bbox[0], bbox[2], num_x)
@@ -747,42 +719,3 @@ def create_figure_grid(num_x, num_y, alpha, bbox=(0, 0, 1, 1), *, fig=None):  # 
         overview_plot.axvline(x, alpha=alpha, linewidth=0.4)
     for y in y_loc:
         overview_plot.axhline(y, alpha=alpha, linewidth=0.4)
-
-
-def get_scalebar_prop_width(
-    scale_unit_w, *, img=None, img_pixel_w=1, img_unit_w=1, img_prop_w=1
-):
-    """Determines the proportional and pixel width of a scale bar that is
-    'scale_unit_w' wide. Takes a PIL Image from
-    Image.open(filename). Takes the width of the image in pixels and
-    units (img_pixel_w and img_unit_w) to get to the pixel/unit ratio.
-    To get the correct proportion, the function also needs the
-    proportion of the figure that the image will take up, img_prop_w.
-    return scale_prop_width
-    """
-    pixels_per_unit = img_pixel_w / img_unit_w
-    scale_pixel_w = scale_unit_w * pixels_per_unit
-    scale_prop_w = scale_pixel_w / img.size[0] * img_prop_w
-    return scale_prop_w
-
-
-def size_image_to_ratio(image, ratio, centers,
-                        pixel_width=None, pixel_height=None):
-    """Returns a cropped image centered at 'centers', 'pixel_width' wide,
-    and with the appropriate ratio of width to height.
-    """
-    if pixel_width:
-        pixel_height = ratio * pixel_width
-    elif pixel_height:
-        pixel_width = pixel_height / ratio
-    else:
-        raise ValueError(
-            "Either pixel_width or pixel_height must be set."
-            "Currently their values are {} and {}.".format(pixel_width, pixel_height)  # noqa
-        )
-    crop_widths = (centers[0] - pixel_width / 2, centers[0] + pixel_width / 2)
-    crop_heights = (centers[1] - pixel_height / 2, centers[1] + pixel_height / 2)  # noqa
-    image = image.crop(
-        (crop_widths[0], crop_heights[0], crop_widths[1], crop_heights[1])
-    )
-    return image

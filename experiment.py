@@ -38,7 +38,7 @@ show_help = True
 
 if show_help:
     print(
-        "fpack version 0.50\n"
+        "fpack version 0.60\n"
         "Remove help via 'fp.show_help=False'\n"
         "Most of the fpack module's functionality can be found from "
         "'dir(fp)' and 'dir(fp.Experiment)'. If you are using IPython "
@@ -458,6 +458,8 @@ class Experiment:
                 "fp.plot_package_help() for more info. \n"
                 "exp.get_xy_data() and other exp.get_xxx() "
                 "to retrieve information from the Experiment.\n"
+                "fp.fit_and_plot_fmr() fits a single file and "
+                "shows behind the scenes of the automated fitting.\n"
                 "fp.fit_fmr_absdisp() and fp.fit_fmr_several()"
                 " will fit one or more scans manually or automatically.\n"
                 "fp.plot_fits() will plot fit(s) along with the data."
@@ -860,6 +862,9 @@ def loadtest():
     Loads a basic experiment into 'test_exp' for testing purposes.
     """
     test_exp = Experiment()
+    x = np.linspace(0, 100, 1000)
+    y1 = 5/(1 + (x-15)**2) + 5/(1 + (x-15.5)**2) - 30/(4 + (x-40)**2)
+    y2 = x
     test_exp.add_scan(
         filename=(
             r"/path/to/your/file"
@@ -873,7 +878,7 @@ def loadtest():
             "Temperature(K): 273\n",
         ],
         axes=["Ax0", "Ax1", "Ax2"],
-        data=np.array([[1, 2, 3], [1, 2, 3], [7, 8, 9]]),
+        data=np.array([x, y1, y2]),
     )
     test_exp.add_scan(
         filename=(
@@ -888,6 +893,6 @@ def loadtest():
             "Temperature(K): 77\n",
         ],
         axes=["Ax0", "Ax1", "Ax2"],
-        data=np.array([[4, 5, 6], [7, 8, 9], [12, 0, 4]]),
+        data=np.array([x, y1, y2]),
     )
     return test_exp

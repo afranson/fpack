@@ -3,6 +3,8 @@ and provide easy ways to visualize the fitting process.
 
 """
 
+# TODO 'copy' scipy curve_fit into fpack so everything can stay in one place.
+
 from .experiment import Experiment
 from .lorentz_functions import (
     absorption_dispersion_mixed,
@@ -13,17 +15,18 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks_cwt
 from scipy.interpolate import UnivariateSpline
+from .extractors import _get_smoothing, _get_cut
 
 
 def _get_auto_params(
-    x, y, derivative=True, cut_scale=5, xbaseline=(None, None), smoothing=5
+    x, y, derivative=True, cut_scale=None, xbaseline=(None, None), smoothing=None
 ):
-    ibaseline = _xbaseline_to_ibaseline(x, xbaseline)
-    y = y - np.average(y[ibaseline[0]: ibaseline[1]])
-    cut = cut_scale * np.std(y[ibaseline[0]: ibaseline[1]])
-    y_cut_data = y
-    y_cut_data[(y <= cut) & (y >= -cut)] = 0
-    cut_data = np.vstack((x, y_cut_data))
+    smoothing = _get_smoothing(y, smoothing)
+    cut_range = _get_cut(x, y, xbaseline, cut_scale)
+    print(cut_range)
+    y_cut = np.copy(y)
+    y_cut[(y >= cut_range[0]) & (y <= cut_range[1])] = 0
+    cut_data = np.vstack((x, y_cut))
     if not derivative:
         integral = UnivariateSpline(cut_data[0], cut_data[1], k=5)
         integral.set_smoothing_factor(smoothing)
@@ -33,14 +36,13 @@ def _get_auto_params(
         deriv.set_smoothing_factor(smoothing)
     deriv2 = deriv.derivative()
     x_roots = deriv2.roots()
+    derivs = [deriv2.derivatives(x_root)[1] for x_root in x_roots]
     try:
-        derivs = [deriv2.derivatives(x_root)[1] for x_root in x_roots]
-    except IndexError as e:
-        print("Failed to find the 1st element of the derivative of the spline"
-              f" at x_roots. x_roots value: {x_roots}. Try decreasing"
-              " cut_scale or smoothing.")
-        print(repr(e))
-    x_d = np.dstack((x_roots, derivs))[0][(derivs[0] > 0):]
+        x_d = np.dstack((x_roots, derivs))[0][(derivs[0] > 0):]
+    except Exception as e:
+        print(x_roots)
+        print(derivs)
+        raise(e)
     lorentzian_guesses = [
         (y1 - y0, (deriv(x0), 0, x1 - x0, (x1 + x0) / 2))
         for (x0, y0, x1, y1) in zip(*[np.nditer(x_d)] * 4)
@@ -56,14 +58,14 @@ def fit_fmr_absdisp(
     file_number,
     *params,
     offset=None,
-    auto=False,
+    auto=2,
     x_column=None,
     y_column=None,
     derivative=True,
     bounds=(-np.inf, np.inf),
     xbaseline=(None, None),
-    cut_scale=5,
-    smoothing=5,
+    cut_scale=None,
+    smoothing=None,
     absolute_sigma=False,
     xfit_range=(None, None),
     **fit_kwargs,
@@ -298,34 +300,57 @@ def fit_and_plot_fmr(
     *params,
     show_params=True,
     offset=None,
-    auto=False,
+    auto=2,
     x_column=None,
     y_column=None,
     derivative=True,
     bounds=(-np.inf, np.inf),
     xbaseline=(None, None),
-    cut_scale=10,
-    smoothing=5,
+    cut_scale=None,
+    smoothing=None,
     absolute_sigma=False,
     xfit_range=(None, None),
 ):
-    fit_fmr_absdisp(
-        exp,
-        file_number,
-        *params,
-        offset=offset,
-        auto=auto,
-        xbaseline=xbaseline,
-        cut_scale=cut_scale,
-        smoothing=smoothing,
-        derivative=derivative,
-        x_column=x_column,
-        y_column=y_column,
-        xfit_range=xfit_range,
-    )
+    """Fits curves to symmetric and antisymmetric components of a lorentzian
+    [derivative] signal. Detects and fits automatically to any number of
+    lorentzians by using the 'auto' kwarg. Set auto=# of lorentzians you expect.
+    i.e. auto=2 will fit to a maximum of 2 lorentzians. For manually fitting,
+    set auto=False (the default) and specify '*params' in the form [p1, p2, p3,
+    p4], [p5, p6, p7, p8], ... where inital guess parameters for each lorentzian
+    are organized as [absorption_amplitude, dispersion_amplitude, linewidth,
+    position]. Default behavior is to fit to lorentzian derivates; set
+    derivatives=False to fit to absorption lineshapes.
 
-    if show_params:
-        show_fit_params(exp, file_number, cov=False)
+    For auto fitting:
+    xbaseline=(None, None)  => set this to the x-values that contain
+    your constant background.
+    cut_scale=5             => sets the size of the area that is
+    ignored by fitting.
+    smoothing=5             => sets how much noise in your signal is rejected.
+    If fits are poor, MODIFY THIS VALUE FIRST (try 0.01, try 200)
+    xfit_range=(None, None) => sets the x-values that contain the lorentzian(s)
+    you want to fit.
+    """  # noqa
+    try:
+        fit_fmr_absdisp(
+            exp,
+            file_number,
+            *params,
+            offset=offset,
+            auto=auto,
+            xbaseline=xbaseline,
+            cut_scale=cut_scale,
+            smoothing=smoothing,
+            derivative=derivative,
+            x_column=x_column,
+            y_column=y_column,
+            xfit_range=xfit_range,
+        )
+        if show_params:
+            show_fit_params(exp, file_number, cov=False)
+    except Exception as e:
+        print(f"Fit failed\n{e}")
+        raise(e)
 
     plot_guess_and_fit(
         exp,

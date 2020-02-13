@@ -38,7 +38,7 @@ show_help = True
 
 if show_help:
     print(
-        "fpack version 0.40\n"
+        "fpack version 0.50\n"
         "Remove help via 'fp.show_help=False'\n"
         "Most of the fpack module's functionality can be found from "
         "'dir(fp)' and 'dir(fp.Experiment)'. If you are using IPython "
@@ -48,6 +48,50 @@ if show_help:
         "Begin by creating an Experiment.\n"
         "'exp = fp.Experiment()', there are other specific types as well."
         )
+
+
+def _pandas_error(exception):
+    raise ValueError("Encountered issues reading your files."
+                     "Common issues are:\n"
+                     "- Check that you are only reading the files you want. Do"
+                     " exp.show_files() to see all the files that have been "
+                     "added. Reload the Experiment and add more regexes or use"
+                     "more restraining regexes in you load_files call.\n"
+                     "- Check that you are not reading the headers from your"
+                     " file into the data. Correct this by increasing the "
+                     "default_data_start_row kwarg to Experiment.\n"
+                     "- Check that the data in your files is uniform.\n"
+                     f"\n{repr(exception)}")
+
+
+def _get_data_start(filename, *, lines_to_profile=100):
+    nums_per_line = [0]*100
+    delims = [" ", "\t", ",", ";"]
+    with open(filename) as f:
+        i = 0
+        for line in f:
+            if i >= lines_to_profile:
+                break
+            i += 1
+            active_delims = [d for d in delims if d in line]
+            for delim in active_delims:
+                try:
+                    [float(x) for x in line.split(delim)]
+                    nums_per_line[i] = len(line.split(delim))
+                except:  # noqa
+                    pass
+    for i in reversed(nums_per_line):
+        if i:
+            num_data_columns = i
+            break
+    guess_data_start_row = nums_per_line.index(num_data_columns) - 1
+    guess_axes_label_row = guess_data_start_row - 1
+    guess_descriptive_rows = guess_axes_label_row - 1
+    guess_delim = active_delims[0]
+    return (guess_descriptive_rows,
+            guess_axes_label_row,
+            guess_data_start_row,
+            guess_delim)
 
 
 def show_files(base_directory, *regexs, show_all=False):
@@ -168,18 +212,20 @@ class Experiment:
         self,
         default_x_column=0,
         default_y_column=1,
-        default_descriptive_rows=0,
-        default_axis_label_row=0,
-        default_data_start_row=1,
-        default_delim_whitespace=True,
-        default_sep=",",
+        # default_descriptive_rows=0,
+        # default_axis_label_row=0,
+        # default_data_start_row=1,
+        # default_sep=",",
+        default_descriptive_rows=None,
+        default_axis_label_row=None,
+        default_data_start_row=None,
+        default_sep=None,
     ):
         self.default_x_column = default_x_column
         self.default_y_column = default_y_column
         self.default_descriptive_rows = default_descriptive_rows
         self.default_axis_label_row = default_axis_label_row
         self.default_data_start_row = default_data_start_row
-        self.default_delim_whitespace = default_delim_whitespace
         self.default_sep = default_sep
         self.scans = list()
         self.storage = dict()
@@ -305,7 +351,6 @@ class Experiment:
         axis_label_row=None,
         data_start_row=None,
         sep=None,
-        delim_whitespace=None,
         transpose=True,
         **read_csv_kwargs,
     ):
@@ -313,16 +358,25 @@ class Experiment:
 
         """
         file_numbers = self.check_file_numbers(file_numbers)
-        if descriptive_rows is None:
-            descriptive_rows = self.default_descriptive_rows
-        if axis_label_row is None:
-            axis_label_row = self.default_axis_label_row
-        if data_start_row is None:
-            data_start_row = self.default_data_start_row
-        if sep is None:
-            sep = self.default_sep
-        if delim_whitespace is None:
-            delim_whitespace = self.default_delim_whitespace
+        guess_params = _get_data_start(self.get_scan(file_numbers[0]).filename)
+        defaults = (self.default_descriptive_rows,
+                    self.default_axis_label_row,
+                    self.default_data_start_row,
+                    self.default_sep)
+        inputs = (descriptive_rows,
+                  axis_label_row,
+                  data_start_row,
+                  sep)
+        all_params = zip(guess_params, defaults, inputs)
+        print(all_params)
+        params = [0] * len(inputs)
+        for n, param in enumerate(all_params):
+            for option in param:
+                if option is not None:
+                    params[n] = option
+        descriptive_rows, axis_label_row, data_start_row, sep = params
+        if sep == ' ':
+            sep = '\s+'  # noqa
         for file_number in file_numbers:
             filename = self.get_scan(file_number).filename
             temp_header = []
@@ -331,22 +385,23 @@ class Experiment:
                 self.set_scan_params(file_number, info=temp_header)
                 _ = [f.readline() for _ in range(axis_label_row - descriptive_rows - 1)]  # noqa
                 axes_line = f.readline()
-                if delim_whitespace:
-                    axes = axes_line[:-1].split()
+                if sep == "\s+":
+                    axes = axes_line[:-1].split(" ")
                 else:
                     axes = axes_line[:-1].split(sep)
                 self.set_scan_params(file_number, axes=axes)
                 read_csv_kwargs = {
                     "skiprows": data_start_row - axis_label_row - 1,
                     "sep": sep,
-                    "delim_whitespace": delim_whitespace,
                     "header": None,
                     **read_csv_kwargs,
                 }
+                print(read_csv_kwargs)
+                print(params)
                 try:
                     data = np.array(pd.read_csv(f, **read_csv_kwargs))
-                except pd.errors.ParserError as e:
-                    raise TypeError(f"pandas could not read file: {f}.\n{repr(e)}")  # noqa
+                except Exception as e:
+                    _pandas_error(e)
             if transpose:
                 self.set_scan_params(file_number, data=data.T)
             else:
@@ -362,7 +417,6 @@ class Experiment:
         axis_label_row=None,
         data_start_row=None,
         sep=None,
-        delim_whitespace=None,
         **read_csv_kwargs,
     ):
         """Adds and reads files into the Experiment using the add_files and the
@@ -388,7 +442,6 @@ class Experiment:
             descriptive_rows=descriptive_rows,
             axis_label_row=axis_label_row,
             data_start_row=data_start_row,
-            delim_whitespace=delim_whitespace,
             sep=sep,
             **read_csv_kwargs,
         )
@@ -734,8 +787,7 @@ class EPR_Experiment(Experiment):
             default_descriptive_rows=-1,
             default_axis_label_row=0,
             default_data_start_row=2,
-            default_delim_whitespace=True,
-            default_sep=",",
+            default_sep="\s+",
         )
 
     def normalize_frequency(self, *file_numbers, overwrite=False, desired_frequency=10):  # noqa
@@ -783,7 +835,6 @@ class BFMR_Experiment(Experiment):
             default_descriptive_rows=13,
             default_axis_label_row=14,
             default_data_start_row=15,
-            default_delim_whitespace=False,
             default_sep="\t",
         )
 
@@ -800,7 +851,6 @@ class PNA_Experiment(Experiment):
             default_descriptive_rows=11,
             default_axis_label_row=12,
             default_data_start_row=13,
-            default_delim_whitespace=False,
             default_sep="\t",
         )
 

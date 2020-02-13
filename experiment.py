@@ -38,6 +38,7 @@ show_help = True
 
 if show_help:
     print(
+<<<<<<< HEAD
         "fpack version 0.40\n"
         "Remove help via 'fp.show_help=False'\n"
         "Most of the fpack module's functionality can be found from "
@@ -48,6 +49,21 @@ if show_help:
         "Begin by creating an Experiment.\n"
         "'exp = fp.Experiment()', there are other specific types as well."
         )
+=======
+        '''
+        fpack version 0.40
+        Remove help via 'fp.show_help=False'
+        Most of the fpack module's functionality can be found from \
+        'dir(fp)' and 'dir(fp.Experiment)'.
+        If you are using IPython or Jupyer, then further function descriptions \
+        can be found via 'fp.function?' and 'fp.function??' (or 'fp.Experiment.function?').
+        Finally, source code can be found at 'print(fp.__file__)'
+
+        Begin by creating an Experiment.
+        'exp = fp.Experiment()', there are other, more specific types as well.
+        '''
+    )
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
 
 
 def show_files(base_directory, *regexs, show_all=False):
@@ -185,11 +201,19 @@ class Experiment:
         self.storage = dict()
         if show_help:
             print(
+<<<<<<< HEAD
                 "Now add files to the experiment."
                 "exp.load_files(r\"~/path/to/dir\" (or C:\\path\\to\\dir), "
                 "r\"[regex]*.[to\\d]?(_|-)[match]+\")"
             )
 
+=======
+                '''
+                Now add files to the experiment.
+                exp.load_files(r"path/to/dir", r"[regex]*.[to\d]?(_|-)[match]+")
+                '''
+            )
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
     def __len__(self):
         return len(self.scans)
 
@@ -396,6 +420,7 @@ class Experiment:
             self.show_files()
         if show_help:
             print(
+<<<<<<< HEAD
                 "Now you can examine, plot, "
                 "and extract the loaded data easily.\n"
                 "The various exp.show_xxx() functions "
@@ -408,6 +433,16 @@ class Experiment:
                 "fp.fit_fmr_absdisp() and fp.fit_fmr_several()"
                 " will fit one or more scans manually or automatically.\n"
                 "fp.plot_fits() will plot fit(s) along with the data."
+=======
+                '''
+                Now you can examine the loaded data, plot it, and extract it easily.
+                The various exp.show_xxx() functions reveal info about loaded files.
+                fp.plot_scans(exp) and the other fp.plot_xxx(exp) functions to plot.
+                fp.plot_tailor() to modify plots (line types, fonts, legends, etc.)
+                exp.get_xy_data() and other exp.get_xxx() to retrieve information
+                from the Experiment.
+                '''
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
             )
 
     def set_axes(self, *axis_labels):
@@ -634,7 +669,11 @@ class Experiment:
         'match_number' breaks the tie and lets you choose which one you want.
         This can be avoided by careful selection of your regex, however.
 
+<<<<<<< HEAD
         """  # noqa
+=======
+        """
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
         file_numbers = self.check_file_numbers(file_numbers)
         if not (fit_param_indexes is None):
             return self._get_fit_params(*file_numbers, fit_param_indexes=fit_param_indexes)  # noqa
@@ -804,6 +843,7 @@ class PNA_Experiment(Experiment):
             default_sep="\t",
         )
 
+<<<<<<< HEAD
 
 def loadtest():
     """
@@ -814,30 +854,52 @@ def loadtest():
         filename=(
             r"/path/to/your/file"
             r"/Written_8.83V_and_stuff_abo6.6 GHzdomness.ascii"
+=======
+def loadtest():
+    test_exp = Experiment()
+    test_exp.add_scan(
+        filename=(
+            r"C:\Users\frans\Documents\Org_Research_Notebook"
+            r"\Written_8.83V_and_stuff_abo6.6 GHzdomness.ascii"
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
         ),
         info=[
             "Current (A): 5\n",
             "Voltage (V): 13\n",
             "Field (G): 3500.23434\n",
             "Sweep Direction: Up\n",
+<<<<<<< HEAD
             "Temperature(K): 273\n",
+=======
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
         ],
         axes=["Ax0", "Ax1", "Ax2"],
         data=np.array([[1, 2, 3], [1, 2, 3], [7, 8, 9]]),
     )
     test_exp.add_scan(
         filename=(
+<<<<<<< HEAD
             r"/path/to/your/file"
             r"/Written_4.77V with 9.83 GHz and whatever.txt"
+=======
+            r"C:\Users\frans\Documents\Org_Research_Notebook"
+            r"\Written_4.77V with 9.83 GHz and whatever.txt"
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
         ),
         info=[
             "Current (A): 5.5\n",
             "Voltage (V): 42\n",
             "Field (G): 3526.4\n",
             "Sweep Direction: Down\n",
+<<<<<<< HEAD
             "Temperature(K): 77\n",
+=======
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444
         ],
         axes=["Ax0", "Ax1", "Ax2"],
         data=np.array([[4, 5, 6], [7, 8, 9], [12, 0, 4]]),
     )
+<<<<<<< HEAD
     return test_exp
+=======
+>>>>>>> 92efe888ee7905aa418ef06b567d78c180610444

@@ -61,7 +61,7 @@ def _pandas_error(exception):
                      " file into the data. Correct this by increasing the "
                      "default_data_start_row kwarg to Experiment.\n"
                      "- Check that the data in your files is uniform.\n"
-                     f"\n{repr(exception)}")
+                     f"\nPandas error below.\n{repr(exception)}")
 
 
 def _get_data_start(filename, *, lines_to_profile=100):

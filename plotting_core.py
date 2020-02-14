@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 import datetime
-from .extractors import _get_smoothing, \
+from .helper_functions import _get_smoothing, \
     _get_cut, \
     _x_to_index, \
     _xbaseline_to_ibaseline

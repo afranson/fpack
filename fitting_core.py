@@ -15,7 +15,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks_cwt
 from scipy.interpolate import UnivariateSpline
-from .extractors import _get_smoothing, _get_cut
+from .helper_functions import _get_smoothing, _get_cut
 
 
 def _get_auto_params(

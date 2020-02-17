@@ -20,11 +20,15 @@ fp.plot_tailor(x_label="this", grid=True, figsize=(15,5),
 fp.extract_data(exp_2_rotated, x_column=1, y_column=[4,5,6])
 """
 
+# TODO Make a Project class that can initialize multiple experiments and calculations across experiments.
+# TODO Add a fit_guide function to describe the basics of fitting with python.
+
 
 import os
 import re
 import numpy as np
 import pandas as pd
+
 # import dill
 
 # Color definitions for terminal output
@@ -47,25 +51,46 @@ if show_help:
         " Finally, source code can be found at 'print(fp.__file__)'\n\n"
         "Begin by creating an Experiment.\n"
         "'exp = fp.Experiment()', there are other specific types as well."
-        )
+    )
 
 
 def _pandas_error(exception):
-    raise ValueError("Encountered issues reading your files."
-                     "Common issues are:\n"
-                     "- Check that you are only reading the files you want. Do"
-                     " exp.show_files() to see all the files that have been "
-                     "added. Reload the Experiment and add more regexes or use"
-                     "more restraining regexes in you load_files call.\n"
-                     "- Check that you are not reading the headers from your"
-                     " file into the data. Correct this by increasing the "
-                     "default_data_start_row kwarg to Experiment.\n"
-                     "- Check that the data in your files is uniform.\n"
-                     f"\nPandas error below.\n{repr(exception)}")
+    raise ValueError(
+        "Encountered issues reading your files."
+        "Common issues are:\n"
+        "- Check that you are only reading the files you want. Do"
+        " exp.show_files() to see all the files that have been "
+        "added. Reload the Experiment and add more regexes or use"
+        "more restraining regexes in you load_files call.\n"
+        "- Check that you are not reading the headers from your"
+        " file into the data. Correct this by increasing the "
+        "default_data_start_row kwarg to Experiment.\n"
+        "- Check that the data in your files is uniform.\n"
+        f"\nPandas error below.\n{repr(exception)}"
+    )
+
+
+def _print_after_load():
+    print(
+        "Now you can examine, plot, "
+        "and extract the loaded data easily.\n"
+        "The various exp.show_xxx() functions "
+        "reveal info about loaded files.\n"
+        "fp.plot_scans(exp) and the other "
+        "fp.plot_xxx(exp) functions to plot.\n"
+        "fp.plot_package_help() for more info. \n"
+        "exp.get_xy_data() and other exp.get_xxx() "
+        "to retrieve information from the Experiment.\n"
+        "fp.fit_and_plot_fmr() fits a single file and "
+        "shows behind the scenes of the automated fitting.\n"
+        "fp.fit_fmr_absdisp() and fp.fit_fmr_several()"
+        " will fit one or more scans manually or automatically.\n"
+        "fp.plot_fits() will plot fit(s) along with the data."
+    )
 
 
 def _get_data_start(filename, *, lines_to_profile=100):
-    nums_per_line = [0]*100
+    nums_per_line = [0] * 100
     delims = [" ", "\t", ",", ";"]
     with open(filename) as f:
         i = 0
@@ -88,10 +113,12 @@ def _get_data_start(filename, *, lines_to_profile=100):
     guess_axes_label_row = guess_data_start_row - 1
     guess_descriptive_rows = guess_axes_label_row - 1
     guess_delim = active_delims[0]
-    return (guess_descriptive_rows,
-            guess_axes_label_row,
-            guess_data_start_row,
-            guess_delim)
+    return (
+        guess_descriptive_rows,
+        guess_axes_label_row,
+        guess_data_start_row,
+        guess_delim,
+    )
 
 
 def show_files(base_directory, *regexs, show_all=False):
@@ -169,21 +196,21 @@ class Scan:
         fit_params=None,
         fit_covariance=None,
     ):
-        if not (filename is None):
+        if filename is not None:
             self.filename = filename
-        if not (info is None):
+        if info is not None:
             self.info = info
-        if not (axes is None):
+        if axes is not None:
             self.axes = axes
-        if not (data is None):
+        if data is not None:
             self.data = data
-        if not (guess_params is None):
+        if guess_params is not None:
             self.guess_params = guess_params
-        if not (fit_func is None):
+        if fit_func is not None:
             self.fit_func = fit_func
-        if not (fit_params is None):
+        if fit_params is not None:
             self.fit_params = fit_params
-        if not (fit_covariance is None):
+        if fit_covariance is not None:
             self.fit_covariance = fit_covariance
 
     def copy_scan(self):
@@ -210,30 +237,40 @@ class Experiment:
 
     def __init__(
         self,
+        base_directory=None,
+        *regexes,
+        dill_file=None,
+        show=True,
         default_x_column=0,
         default_y_column=1,
-        # default_descriptive_rows=0,
-        # default_axis_label_row=0,
-        # default_data_start_row=1,
-        # default_sep=",",
-        default_descriptive_rows=None,
-        default_axis_label_row=None,
-        default_data_start_row=None,
-        default_sep=None,
+        descriptive_rows=None,
+        axis_label_row=None,
+        data_start_row=None,
+        sep=None,
+        **csv_kwargs,
     ):
         self.default_x_column = default_x_column
         self.default_y_column = default_y_column
-        self.default_descriptive_rows = default_descriptive_rows
-        self.default_axis_label_row = default_axis_label_row
-        self.default_data_start_row = default_data_start_row
-        self.default_sep = default_sep
         self.scans = list()
         self.storage = dict()
-        if show_help:
+        if base_directory is not None:
+            self.load_files(
+                base_directory,
+                *regexes,
+                dill_file=dill_file,
+                show=show,
+                descriptive_rows=descriptive_rows,
+                axis_label_row=axis_label_row,
+                data_start_row=data_start_row,
+                sep=sep,
+                **csv_kwargs,
+            )
+            _print_after_load()
+        else:
             print(
                 "Now add files to the experiment.\n"
-                "exp.load_files(r\"~/path/to/dir\" (or C:\\path\\to\\dir), "
-                "r\"[regex]*.[to\\d]?(_|-)[match]+\")"
+                'exp.load_files(r"~/path/to/dir" (or C:\\path\\to\\dir), '
+                'r"[regex]*.[to\\d]?(_|-)[match]+")'
             )
 
     def __len__(self):
@@ -355,19 +392,11 @@ class Experiment:
         **read_csv_kwargs,
     ):
         """Reads all provided file numbers (enter nothing to read all of them)
-
         """
         file_numbers = self.check_file_numbers(file_numbers)
         guess_params = _get_data_start(self.get_scan(file_numbers[0]).filename)
-        defaults = (self.default_descriptive_rows,
-                    self.default_axis_label_row,
-                    self.default_data_start_row,
-                    self.default_sep)
-        inputs = (descriptive_rows,
-                  axis_label_row,
-                  data_start_row,
-                  sep)
-        all_params = zip(guess_params, defaults, inputs)
+        inputs = (descriptive_rows, axis_label_row, data_start_row, sep)
+        all_params = zip(guess_params, inputs)
         print(all_params)
         params = [0] * len(inputs)
         for n, param in enumerate(all_params):
@@ -375,15 +404,20 @@ class Experiment:
                 if option is not None:
                     params[n] = option
         descriptive_rows, axis_label_row, data_start_row, sep = params
-        if sep == ' ':
-            sep = '\s+'  # noqa
+        if sep == " ":
+            sep = "\s+"  # noqa
         for file_number in file_numbers:
             filename = self.get_scan(file_number).filename
             temp_header = []
             with open(filename, "r") as f:
-                temp_header = [f.readline() for _ in range(descriptive_rows + 1)]  # noqa
+                temp_header = [
+                    f.readline() for _ in range(descriptive_rows + 1)
+                ]  # noqa
                 self.set_scan_params(file_number, info=temp_header)
-                _ = [f.readline() for _ in range(axis_label_row - descriptive_rows - 1)]  # noqa
+                _ = [
+                    f.readline()
+                    for _ in range(axis_label_row - descriptive_rows - 1)
+                ]  # noqa
                 axes_line = f.readline()
                 if sep == "\s+":  # noqa
                     axes = axes_line[:-1].split(" ")
@@ -448,22 +482,7 @@ class Experiment:
         if show:
             self.show_files()
         if show_help:
-            print(
-                "Now you can examine, plot, "
-                "and extract the loaded data easily.\n"
-                "The various exp.show_xxx() functions "
-                "reveal info about loaded files.\n"
-                "fp.plot_scans(exp) and the other "
-                "fp.plot_xxx(exp) functions to plot.\n"
-                "fp.plot_package_help() for more info. \n"
-                "exp.get_xy_data() and other exp.get_xxx() "
-                "to retrieve information from the Experiment.\n"
-                "fp.fit_and_plot_fmr() fits a single file and "
-                "shows behind the scenes of the automated fitting.\n"
-                "fp.fit_fmr_absdisp() and fp.fit_fmr_several()"
-                " will fit one or more scans manually or automatically.\n"
-                "fp.plot_fits() will plot fit(s) along with the data."
-            )
+            _print_after_load()
 
     def set_axes(self, *axis_labels):
         """Overrides the axes of the Experiment in the event of poor default
@@ -510,7 +529,7 @@ class Experiment:
         file_numbers = self.check_file_numbers(file_numbers)
         if rows is None:
             rows = list(range(len(self.get_scan(file_numbers[0]).info)))
-        rows = [rows[i: i + 3] for i in range(0, len(rows), 3)]
+        rows = [rows[i : i + 3] for i in range(0, len(rows), 3)]
         rows[-1] = (rows[-1] + [None] * 3)[:3]
 
         print("|" + "-" * (25 + 19 * len(rows[0])) + "|")
@@ -536,7 +555,7 @@ class Experiment:
                 if n == 0:
                     filenames.append(filename[:18])
                 else:
-                    filenames.append(filename[18 + 23 * (n - 1): 18 + 23 * n])
+                    filenames.append(filename[18 + 23 * (n - 1) : 18 + 23 * n])
             file_strings = []
             file_info = f"|{file_num:4d}: {filenames[0]:^19.18}|"
             file_strings = [file_info] + [""] * (len(rows) - 1)
@@ -549,7 +568,9 @@ class Experiment:
                         pass
                     else:
                         row_info = self.get_scan(file_num).info[row]
-                        file_strings[n] += f"{row_info.split(':')[1][:-1]:<18.16}|"  # noqa
+                        file_strings[
+                            n
+                        ] += f"{row_info.split(':')[1][:-1]:<18.16}|"  # noqa
             for n, _ in enumerate(rows):
                 print(file_strings[n])
             print("|" + "-" * (25 + 19 * len(rows[0])) + "|")
@@ -561,7 +582,12 @@ class Experiment:
         """
         print("Data Preview:\n")
         print(
-            " ".join([f"{element:<16}" for element in self.get_scan(file_number).axes])  # noqa
+            " ".join(
+                [
+                    f"{element:<16}"
+                    for element in self.get_scan(file_number).axes
+                ]
+            )  # noqa
         )
         for data_row in self.get_scan(file_number).data.T[0:num_rows]:
             try:
@@ -597,17 +623,14 @@ class Experiment:
         """
         file_numbers = self.check_file_numbers(file_numbers)
         x_column, y_column = self.check_xy_columns(x_column, y_column)
-
         return_array = []
         for file_number in file_numbers:
             data_to_extract = self.get_scan(file_number).data
             x_data = data_to_extract[x_column]
             y_data = data_to_extract[y_column]
             return_array.append([x_data, y_data])
-
         if len(file_numbers) == 1:
             return_array = return_array[0]
-
         return return_array
 
     def _get_fit_params(self, *file_numbers, fit_param_indexes):
@@ -618,6 +641,10 @@ class Experiment:
         for n, file_num in enumerate(file_numbers):
             scan = self.get_scan(file_num)
             fit_params = scan.fit_params
+            if fit_params is None:  # This file has no fit data
+                print(f"Warning: file {file_num} has no fit data.")
+                values[n] = np.nan
+                continue
             try:
                 values[n] = fit_params[fit_param_indexes]
             except TypeError:
@@ -630,9 +657,11 @@ class Experiment:
             return values[0]
         return values
 
-    def _get_file_and_info_item(self, *file_numbers, regex, repl, match_number):  # noqa
+    def _get_file_and_info_item(
+        self, *file_numbers, regex, repl, match_number
+    ):
         pattern = re.compile(regex)
-        values = np.zeros(len(file_numbers), dtype='<U100')
+        values = np.zeros(len(file_numbers), dtype="<U100")
         for n, file_num in enumerate(file_numbers):
             scan = self.get_scan(file_num)
             metadata = np.hstack((scan.filename, scan.info))
@@ -691,10 +720,12 @@ class Experiment:
 
         """  # noqa
         file_numbers = self.check_file_numbers(file_numbers)
-        if not (fit_param_indexes is None):
-            return self._get_fit_params(*file_numbers, fit_param_indexes=fit_param_indexes)  # noqa
+        if fit_param_indexes is not None:
+            return self._get_fit_params(
+                *file_numbers, fit_param_indexes=fit_param_indexes
+            )
 
-        if not (return_file_numbers is None):
+        if return_file_numbers is not None:
             return list(file_numbers)
 
         return self._get_file_and_info_item(
@@ -747,23 +778,36 @@ class Experiment:
             x_fit = np.linspace(x[0], x[-1], x_density * len(x))
         func = self.get_scan(file_number).fit_func
         params = self.get_scan(file_number).fit_params
+        if func is None or params is None:
+            print(f"Warning: file {file_number} has no fit data.")
+            return x_fit, None
         return x_fit, func(x_fit, *params)
 
-    def get_xy_guess(self, file_number, x_fit=None, x_column=None, x_density=1):  # noqa
+    def get_xy_guess(
+        self, file_number, x_fit=None, x_column=None, x_density=1
+    ):
         if x_fit is None:
             x, _ = self.get_xy_data(file_number, x_column=x_column)
             x_fit = np.linspace(x[0], x[-1], x_density * len(x))
         func = self.get_scan(file_number).fit_func
         params = self.get_scan(file_number).guess_params
+        if func is None or params is None:
+            print(f"Warning: file {file_number} has no fit data.")
+            return x_fit, None
         return x_fit, func(x_fit, *params)
 
-    def get_xy_werror(self, file_number, x_fit=None, x_column=None, x_density=1):  # noqa
+    def get_xy_werror(
+        self, file_number, x_fit=None, x_column=None, x_density=1
+    ):
         if x_fit is None:
             x, _ = self.get_xy_data(file_number, x_column=x_column)
             x_fit = np.linspace(x[0], x[-1], x_density * len(x))
         func = self.get_scan(file_number).fit_func
         params = self.get_scan(file_number).fit_params
         cov = self.get_scan(file_number).fit_covariance
+        if func is None or params is None or cov is None:
+            print(f"Warning: file {file_number} has no fit data.")
+            return x_fit, None
         stderr = np.sqrt(np.diag(cov))
         y_fit = func(x_fit, *params)
         y_upper = func(x_fit, *(params + stderr))
@@ -792,7 +836,9 @@ class EPR_Experiment(Experiment):
             default_sep="\s+",  # noqa
         )
 
-    def normalize_frequency(self, *file_numbers, overwrite=False, desired_frequency=10):  # noqa
+    def normalize_frequency(
+        self, *file_numbers, overwrite=False, desired_frequency=10
+    ):  # noqa
         """Normalizes cavity EPR data to a certain frequency to account for
         frequency changes due returning of the cavity for different
         sample geometries.
@@ -863,7 +909,11 @@ def loadtest():
     """
     test_exp = Experiment()
     x = np.linspace(0, 100, 1000)
-    y1 = 5/(1 + (x-15)**2) + 5/(1 + (x-15.5)**2) - 30/(4 + (x-40)**2)
+    y1 = (
+        5 / (1 + (x - 15) ** 2)
+        + 5 / (1 + (x - 15.5) ** 2)
+        - 30 / (4 + (x - 40) ** 2)
+    )
     y2 = x
     test_exp.add_scan(
         filename=(

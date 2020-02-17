@@ -3,10 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 import datetime
-from .helper_functions import _get_smoothing, \
-    _get_cut, \
-    _x_to_index, \
-    _xbaseline_to_ibaseline
+from .helper_functions import (
+    _get_smoothing,
+    _get_cut,
+    _x_to_index,
+    _xbaseline_to_ibaseline,
+)
 
 
 def show():
@@ -65,12 +67,7 @@ def figure(*, column_width=2, height=4, figsize=None, dpi=150) -> plt.Figure:
 
 
 def plot(
-    *args,
-    new_fig=True,
-    new_ax=False,
-    figsize=(6.67, 4),
-    dpi=150,
-    **kwargs,
+    *args, new_fig=True, new_ax=False, figsize=(6.67, 4), dpi=150, **kwargs,
 ):
     fig, ax = _new_fig_andor_ax(
         new_fig=new_fig, new_ax=new_ax, figsize=figsize, dpi=dpi
@@ -79,6 +76,7 @@ def plot(
 
 
 # Include the ability to do log plots along various axes.
+
 
 def plot_tailor(
     *,
@@ -171,7 +169,9 @@ def plot_tailor(
     if y_tick_labels:
         plt.gca().yaxis.set_ticklabels(y_tick_labels)
 
-    plt.ticklabel_format(style="sci", scilimits=(-2, 4), axis="both", useOffset=False)  # noqa
+    plt.ticklabel_format(
+        style="sci", scilimits=(-2, 4), axis="both", useOffset=False
+    )  # noqa
     if x_label:
         plt.xlabel(x_label, fontsize=label_size)
     if y_label:
@@ -202,7 +202,7 @@ def plot_xvline(exp: Experiment, point_number=None, x_value=None):
     if point_number:
         plt.axvline(x_data[point_number])
         return x_data[point_number]
-    elif not (x_value is None):
+    elif x_value is not None:
         i = _x_to_index(x_data, x_value)
         plt.axvline(x_data[i])
         return i
@@ -219,7 +219,8 @@ def plot_package_help():
         "fp.plot_tailer(legend=True, x_lim=, y_lim=, ...)\n\n"
         "fp.plot_fits(exp, file_numbers)\n"
         "fp.plot_tailer(x_tick_values=, x_tick_sides=, x_label_sides=)\n\n"
-        "fp.plot_metadata(exp, *file_numbers, x_regex=, y_regex=, etc.)")
+        "fp.plot_metadata(exp, *file_numbers, x_regex=, y_regex=, etc.)"
+    )
 
 
 def plot_manual_guide():
@@ -251,7 +252,8 @@ def plot_manual_guide():
         "plt.rc('text', usetex=True) -- use LaTeX to render all text"
         "plt.rc('font', family='serif') -- font best matched to APL\n"
         "plt.rc('text.latex',"
-        r"preamble=r'\usepackage{siunitx}, \usepackage{mathptmx}')")
+        r"preamble=r'\usepackage{siunitx}, \usepackage{mathptmx}')"
+    )
 
 
 def _new_fig_andor_ax(new_fig=True, new_ax=False, figsize=(6.69, 4), dpi=150):
@@ -270,6 +272,7 @@ def _new_fig_andor_ax(new_fig=True, new_ax=False, figsize=(6.69, 4), dpi=150):
 # Add plotting with waterfall offset labelled by some extracted number
 # - voltage for example [0, 1, 5, 10, 20]. Wrap heatmat into
 # plot_scans. Derivative and integral plotting by data and by spline.
+
 
 def plot_scans(
     exp: Experiment,
@@ -312,10 +315,14 @@ def plot_scans(
             x_data, y_data = exp.get_xy_fit(
                 file_number, x_column=x_column, x_density=x_density
             )
+            if y_data is None:
+                continue
         elif guess:
             x_data, y_data = exp.get_xy_guess(
                 file_number, x_column=x_column, x_density=x_density
             )
+            if y_data is None:
+                continue
         else:
             x_data, y_data = exp.get_xy_data(
                 file_number, x_column=x_column, y_column=y_column
@@ -323,29 +330,36 @@ def plot_scans(
         if integrate:
             i_baseline = _xbaseline_to_ibaseline(x_data, xbaseline)
             y_data = np.cumsum(
-                y_data - np.average(y_data[i_baseline[0]: i_baseline[1]])
+                y_data - np.average(y_data[i_baseline[0] : i_baseline[1]])
             )
 
         if waterfall:
             y_data = y_data - y_data[0] + n * waterfall
 
-        if not (metadata_label is None):
+        if metadata_label is not None:
             label = exp.get_metadata(
-                file_number, regex=metadata_label, repl=repl,
-                match_number=match_number
+                file_number,
+                regex=metadata_label,
+                repl=repl,
+                match_number=match_number,
             )
         else:
             label = f"File: {file_number}"
 
         ax.plot(
-            x_data[::skip_points], y_data[::skip_points], fmt, label=label,
-            **plot_kw
+            x_data[::skip_points],
+            y_data[::skip_points],
+            fmt,
+            label=label,
+            **plot_kw,
         )
 
-    if not (metadata_title is None):
+    if metadata_title is not None:
         title = exp.get_metadata(
-            file_number, regex=metadata_title, repl=repl,
-            match_number=match_number
+            file_number,
+            regex=metadata_title,
+            repl=repl,
+            match_number=match_number,
         )
     else:
         title = None
@@ -488,8 +502,8 @@ def plot_guess_and_fit(
             label="Ignored Region",
         )
         plt.plot(
-            x_data[ibaseline[0]: ibaseline[1]],
-            y_data[ibaseline[0]: ibaseline[1]],
+            x_data[ibaseline[0] : ibaseline[1]],
+            y_data[ibaseline[0] : ibaseline[1]],
             "C4--",
             alpha=0.5,
             label="Baseline Data",
@@ -497,15 +511,15 @@ def plot_guess_and_fit(
         plt.autoscale(enable=False, axis="y")
         if derivative:
             plt.plot(
-                x_data[ifit_range[0]: ifit_range[1]],
-                deriv(x_data[ifit_range[0]: ifit_range[1]]),
+                x_data[ifit_range[0] : ifit_range[1]],
+                deriv(x_data[ifit_range[0] : ifit_range[1]]),
                 "C2:",
                 label="Spline",
             )
         else:
             plt.plot(
-                x_data[ifit_range[0]: ifit_range[1]],
-                integral(x_data[ifit_range[0]: ifit_range[1]]),
+                x_data[ifit_range[0] : ifit_range[1]],
+                integral(x_data[ifit_range[0] : ifit_range[1]]),
                 "C2:",
                 label="Spline",
             )
@@ -634,8 +648,12 @@ def plot_two_axes(
     x_column_1, y_column_1 = exp.check_xy_columns(x_column_1, y_column_1)
     x_column_2, y_column_2 = exp.check_xy_columns(x_column_2, y_column_2)
 
-    x_data1, y_data1 = exp.get_xy_data(file_1, x_column=x_column_1, y_column=y_column_1)  # noqa
-    x_data2, y_data2 = exp.get_xy_data(file_2, x_column=x_column_2, y_column=y_column_2)  # noqa
+    x_data1, y_data1 = exp.get_xy_data(
+        file_1, x_column=x_column_1, y_column=y_column_1
+    )  # noqa
+    x_data2, y_data2 = exp.get_xy_data(
+        file_2, x_column=x_column_2, y_column=y_column_2
+    )  # noqa
 
     fig = figure()
     ax1 = fig.add_subplot(211)
@@ -663,6 +681,7 @@ def plot_two_axes(
 
 # Needs to remove right axis from first plot, only as y-axis to right
 # side. Just one x axis - no plotting second x axis.
+
 
 def plot_add_y(x_data, y_data, **plot_kw):
     prev_ax = plt.gca()
@@ -707,7 +726,9 @@ def normalize(y_data):
     return m * y_data + b
 
 
-def create_figure_grid(num_x, num_y, alpha=0.3, bbox=(0, 0, 1, 1), *, fig=None):  # noqa
+def create_figure_grid(
+    num_x, num_y, alpha=0.3, bbox=(0, 0, 1, 1), *, fig=None
+):  # noqa
     if fig is None:
         fig = plt.gcf()
     x_loc = np.linspace(bbox[0], bbox[2], num_x)

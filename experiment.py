@@ -43,14 +43,15 @@ show_help = True
 if show_help:
     print(
         "fpack version 0.60\n"
-        "Remove help via 'fp.show_help=False'\n"
+        # "Remove help via fp.show_help=False\n"
         "Most of the fpack module's functionality can be found from "
-        "'dir(fp)' and 'dir(fp.Experiment)'. If you are using IPython "
+        "dir(fp) and dir(fp.Experiment). If you are using IPython "
         "or Jupyer, then further function descriptions can be found via "
-        "'fp.function?' and 'fp.function??' (or 'fp.Experiment.function?')."
-        " Finally, source code can be found at 'print(fp.__file__)'\n\n"
+        "fp.function? and fp.function?? (or fp.Experiment.function?)."
+        " Finally, source code can be found at print(fp.__file__)\n\n"
         "Begin by creating an Experiment.\n"
-        "'exp = fp.Experiment()', there are other specific types as well."
+        "exp = fp.Experiment(r\"~/path/to/dir\" (or C:\\path\\to\\dir), "
+        "r\"[regex]*.[to\\d]?(_|-)[match]+\")"
     )
 
 
@@ -83,7 +84,7 @@ def _print_after_load():
         "to retrieve information from the Experiment.\n"
         "fp.fit_and_plot_fmr() fits a single file and "
         "shows behind the scenes of the automated fitting.\n"
-        "fp.fit_fmr_absdisp() and fp.fit_fmr_several()"
+        "fp.fit_fmr_exp()"
         " will fit one or more scans manually or automatically.\n"
         "fp.plot_fits() will plot fit(s) along with the data."
     )

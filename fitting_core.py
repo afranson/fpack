@@ -56,12 +56,12 @@ def _get_auto_params(
 
 
 def fit_exp(
-        exp: Experiment,
-        fit_func,
-        *file_numbers,
-        x_column=None,
-        y_column=None,
-        **curve_fit_kwargs,
+    exp: Experiment,
+    fit_func,
+    *file_numbers,
+    x_column=None,
+    y_column=None,
+    **curve_fit_kwargs,
 ):
     """Allows for general fitting to *fit_func* across an entire Experiment.
     Currently uses scipy.curve_fit to fit specified data to the supplied
@@ -78,9 +78,7 @@ def fit_exp(
         )
         popt, pcov = curve_fit(fit_func, x_data, y_data, **curve_fit_kwargs)
         exp.get_scan(n).set_scan_params(
-            fit_func=fit_func,
-            fit_params=popt,
-            fit_covariance=pcov,
+            fit_func=fit_func, fit_params=popt, fit_covariance=pcov,
         )
 
 
@@ -173,7 +171,9 @@ def fit_fmr_exp(
         if xbaseline != (None, None):
             ibaseline = _xbaseline_to_ibaseline(x_data, xbaseline)
             stddev = np.std(y_data[ibaseline[0] : ibaseline[1]])
-            err_list = stddev * np.ones(len(y_data[ifit_range[0] : ifit_range[1]]))
+            err_list = stddev * np.ones(
+                len(y_data[ifit_range[0] : ifit_range[1]])
+            )
             absolute_sigma = True
         else:
             err_list = None

@@ -45,15 +45,15 @@ def _get_cut(x, y, xbaseline, cut_scale):
         if cut_scale is None:
             cut_scale = 2
         ibaseline = _xbaseline_to_ibaseline(x, xbaseline)
-        y_mean = np.average(y[ibaseline[0]: ibaseline[1]])
+        y_mean = np.average(y[ibaseline[0] : ibaseline[1]])
         y_zeroed = y - y_mean
-        cut = cut_scale * np.std(y_zeroed[ibaseline[0]: ibaseline[1]])
+        cut = cut_scale * np.std(y_zeroed[ibaseline[0] : ibaseline[1]])
         cut_range = np.array([y_mean - cut, y_mean + cut])
         return cut_range
 
     n, bins = np.histogram(y)
     biggest_bin = np.argmax(n)
-    cut_range = bins[biggest_bin: biggest_bin + 2]
+    cut_range = bins[biggest_bin : biggest_bin + 2]
     return cut_range
 
 
@@ -74,8 +74,9 @@ def get_scalebar_prop_width(
     return scale_prop_w
 
 
-def size_image_to_ratio(image, ratio, centers,
-                        pixel_width=None, pixel_height=None):
+def size_image_to_ratio(
+    image, ratio, centers, pixel_width=None, pixel_height=None
+):
     """Returns a cropped image centered at 'centers', 'pixel_width' wide,
     and with the appropriate ratio of width to height.
     """
@@ -86,10 +87,15 @@ def size_image_to_ratio(image, ratio, centers,
     else:
         raise ValueError(
             "Either pixel_width or pixel_height must be set."
-            "Currently their values are {} and {}.".format(pixel_width, pixel_height)  # noqa
+            "Currently their values are {} and {}.".format(
+                pixel_width, pixel_height
+            )  # noqa
         )
     crop_widths = (centers[0] - pixel_width / 2, centers[0] + pixel_width / 2)
-    crop_heights = (centers[1] - pixel_height / 2, centers[1] + pixel_height / 2)  # noqa
+    crop_heights = (
+        centers[1] - pixel_height / 2,
+        centers[1] + pixel_height / 2,
+    )  # noqa
     image = image.crop(
         (crop_widths[0], crop_heights[0], crop_widths[1], crop_heights[1])
     )

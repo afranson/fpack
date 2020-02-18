@@ -32,19 +32,19 @@ def fit_package_help():
         " the fit may be failing and how to fix it.\n"
         "\n"
         "General recipe for fitting:\n"
-        "from scipy.optimize import curve_fit"
-        "import numpy as np"
-        "import matplotlib.pyplot as plt"
+        "from scipy.optimize import curve_fit\n"
+        "import numpy as np\n"
+        "import matplotlib.pyplot as plt\n"
         "def fit_func(x, param0, param1, ...):\n"
         "    return x * param0 + ... # your function definition to fit\n"
         "params, cov = curve_fit(fit_func, x, y, ...) # get ... via curve_fit?"
-        "fp.plot(x, y) # plot the data you fit"
+        "\nfp.plot(x, y) # plot the data you fit\n"
         "x_fit = np.linspace(x[0], x[-1], n) # n is number of points you want"
         " in x_fit\n"
         "fp.plot(x_fit, func(x_fit, *params)) # it is import x_fit is a numpy"
         " array.\n"
         "# This next part plots the stderr of your fit as a shaded region.\n"
-        "stderr = np.sqrt(np.diag(cov))"
+        "stderr = np.sqrt(np.diag(cov))\n"
         "plt.fill_between(x_fit, func(x_fit, *(params - stderr)), "
         "func(x_fit, *(params + stderr)), alpha=0.3, color='k')\n"
         "\n"
@@ -66,7 +66,6 @@ def _get_auto_params(
 ):
     smoothing = _get_smoothing(y, smoothing)
     cut_range = _get_cut(x, y, xbaseline, cut_scale)
-    print(cut_range)
     y_cut = np.copy(y)
     y_cut[(y >= cut_range[0]) & (y <= cut_range[1])] = 0
     cut_data = np.vstack((x, y_cut))
@@ -83,8 +82,10 @@ def _get_auto_params(
     try:
         x_d = np.dstack((x_roots, derivs))[0][(derivs[0] > 0) :]
     except Exception as e:
-        print(x_roots)
-        print(derivs)
+        print("Roots of spline: ", x_roots,
+              "\nRoots of derivative spline: ", derivs)
+        if x_roots == [] and derivs == []:
+            print("Try decreasing cut_scale and/or smoothing.")
         raise e
     lorentzian_guesses = [
         (y1 - y0, (deriv(x0), 0, x1 - x0, (x1 + x0) / 2))
@@ -374,7 +375,7 @@ def fit_and_plot_fmr(
         fit_fmr_exp(
             exp,
             file_number,
-            params,
+            params=params,
             offset=offset,
             auto=auto,
             xbaseline=xbaseline,
@@ -385,11 +386,13 @@ def fit_and_plot_fmr(
             y_column=y_column,
             xfit_range=xfit_range,
         )
+    except Exception as e:
+        print(f"Fit failed.\n{e}")
+    try:
         if show_params:
             show_fit_params(exp, file_number, cov=False)
     except Exception as e:
-        print(f"Fit failed\n{e}")
-        raise (e)
+        print(f"Failed to display fit.\n{e}")
 
     plot_guess_and_fit(
         exp,

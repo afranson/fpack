@@ -821,7 +821,7 @@ class Experiment:
             if uniform:
                 try:
                     return_params = np.vstack((return_params, scan.fit_params))
-                except Exception as e:
+                except ValueError as e:
                     print(f"fit_params is not uniform, returning list.\n{e}")
                     return_params = return_params.tolist()
                     return_params.append(scan.fit_params)

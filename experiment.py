@@ -20,8 +20,6 @@ fp.plot_tailor(x_label="this", grid=True, figsize=(15,5),
 fp.extract_data(exp_2_rotated, x_column=1, y_column=[4,5,6])
 """
 
-# TODO Make a Project class that can initialize multiple experiments calc across them.
-
 
 import os
 import re
@@ -284,7 +282,10 @@ class Experiment:
     # ------- Scan Manipulation Functions ------- #
 
     def get_scan(self, file_number):
-        return self.scans[file_number]
+        try:
+            return self.scans[file_number]
+        except IndexError as e:
+            print(f"file {file_number} is not in the experiment.\n{e}")
 
     def add_scan(
         self,
@@ -391,9 +392,8 @@ class Experiment:
         file_numbers = self.check_file_numbers(file_numbers)
         guess_params = _get_data_start(self.get_scan(file_numbers[0]).filename)
         inputs = (descriptive_rows, axis_label_row, data_start_row, sep)
-        all_params = zip(guess_params, inputs)
-        print(all_params)
         params = [0] * len(inputs)
+        all_params = zip(guess_params, inputs)
         for n, param in enumerate(all_params):
             for option in param:
                 if option is not None:
@@ -412,7 +412,7 @@ class Experiment:
                 _ = [
                     f.readline()
                     for _ in range(axis_label_row - descriptive_rows - 1)
-                ]  # noqa
+                ]
                 axes_line = f.readline()
                 if sep == "\s+":  # noqa
                     axes = axes_line[:-1].split(" ")
@@ -425,8 +425,6 @@ class Experiment:
                     "header": None,
                     **read_csv_kwargs,
                 }
-                print(read_csv_kwargs)
-                print(params)
                 try:
                     data = np.array(pd.read_csv(f, **read_csv_kwargs))
                 except Exception as e:

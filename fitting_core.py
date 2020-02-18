@@ -188,7 +188,6 @@ def fit_fmr_exp(
         x_data, y_data = exp.get_xy_data(
             n, x_column=x_column, y_column=y_column
         )
-        num_params = len(params)
         ifit_range = _xbaseline_to_ibaseline(x_data, xfit_range)
         if auto:
             params = _get_auto_params(
@@ -203,6 +202,8 @@ def fit_fmr_exp(
                 params = params[:auto]
             else:
                 num_params = len(params)
+        else:
+            num_params = len(params)
 
         if offset is None:
             offset = y_data[0]

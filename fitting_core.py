@@ -46,7 +46,13 @@ def fit_package_help():
         "# This next part plots the stderr of your fit as a shaded region.\n"
         "stderr = np.sqrt(np.diag(cov))"
         "plt.fill_between(x_fit, func(x_fit, *(params - stderr)), "
-        "func(x_fit, *(params + stderr)), alpha=0.3, color='k')"
+        "func(x_fit, *(params + stderr)), alpha=0.3, color='k')\n"
+        "\n"
+        "More advanced fitting will require extracting data or fit parameters"
+        " via exp.get_all_fit_params() or exp.get_metadata"
+        "(*files, fit_param_indexes=[p1, p2, p3]) where pn are the positions"
+        " of the desired fit parameters.\n"
+        "Then post-processing and plotting is left entirely to the user."
     )
 
 
@@ -96,6 +102,8 @@ def fit_exp(
     *file_numbers,
     x_column=None,
     y_column=None,
+    param_guess_func=None,
+    param_guess_func_params=None,
     **curve_fit_kwargs,
 ):
     """Allows for general fitting to *fit_func* across an entire Experiment.
@@ -103,6 +111,13 @@ def fit_exp(
     fit function. Typically, providing the *params* kwargs will be required
     to get good fit results to anything more complex than linear fits.
 
+    For advanced use, specify param_guess_func in the form:
+    def guess_func(x, y, extra_param1, extra_param2):
+        ** body **
+        return [guess_param0, guess_param1, ...]
+    To automate the initial parameter procedure for an arbitrary fit function.
+    Insert param_guess_func_params as a dictionary of values to pass, unpacked,
+    to you param_guess_func function.
     """
     file_numbers = exp.check_file_numbers(file_numbers)
     x_column, y_column = exp.check_xy_columns(x_column, y_column)
@@ -111,7 +126,16 @@ def fit_exp(
         x_data, y_data = exp.get_xy_data(
             n, x_column=x_column, y_column=y_column
         )
-        popt, pcov = curve_fit(fit_func, x_data, y_data, **curve_fit_kwargs)
+        if param_guess_func is not None:
+            params = param_guess_func(
+                x_data, y_data, **param_guess_func_params
+            )
+            fit_kwargs = {
+                "p0": params,
+            }
+            fit_kwargs.update(curve_fit_kwargs)
+
+        popt, pcov = curve_fit(fit_func, x_data, y_data, **fit_kwargs)
         exp.get_scan(n).set_scan_params(
             fit_func=fit_func, fit_params=popt, fit_covariance=pcov,
         )
@@ -132,7 +156,7 @@ def fit_fmr_exp(
     smoothing=None,
     absolute_sigma=False,
     xfit_range=(None, None),
-    **fit_kwargs,
+    **curve_fit_kwargs,
 ):
     """Fits curves to symmetric and antisymmetric components of a lorentzian
     [derivative] signal. Detects and fits automatically to any number of
@@ -216,19 +240,19 @@ def fit_fmr_exp(
         params = [item for sublist in params for item in sublist]
         params.insert(0, offset)
 
-        curve_fit_kwargs = {
+        fit_kwargs = {
             "p0": params,
             "bounds": bounds,
             "sigma": err_list,
             "absolute_sigma": absolute_sigma,
         }
-        curve_fit_kwargs.update(fit_kwargs)
+        fit_kwargs.update(curve_fit_kwargs)
 
         x_data_tofit = x_data[ifit_range[0] : ifit_range[1]]
         y_data_tofit = y_data[ifit_range[0] : ifit_range[1]]
         try:
             fit_para, fit_cov = curve_fit(
-                fit_function, x_data_tofit, y_data_tofit, **curve_fit_kwargs
+                fit_function, x_data_tofit, y_data_tofit, **fit_kwargs
             )
         except RuntimeError as e:
             print(f"Failed to fit file number: {n}")

@@ -647,7 +647,9 @@ class Experiment:
                         values[n, m] = fit_params[i]
                     except IndexError:  # if the ith value doesn't exist
                         print(
-                            f"Warning: file {file_num} has insufficient fit.\nAsked for element {i} of fit_params which is : {fit_params}"
+                            f"Warning: file {file_num} has insufficient "
+                            f"fit.\nAsked for element {i} of fit_params "
+                            f"which is : {fit_params}"
                         )
                         values[n, m] = np.nan
         if len(file_numbers) == 1:
@@ -815,9 +817,19 @@ class Experiment:
         return x_fit, y_fit, y_lower, y_upper
 
     def get_all_fit_params(self):
+        uniform = True
         return_params = np.asarray(self.get_scan(0).fit_params)
         for n, scan in enumerate(self):
-            return_params = np.vstack((return_params, scan.fit_params))
+            if uniform:
+                try:
+                    return_params = np.vstack((return_params, scan.fit_params))
+                except Exception as e:
+                    print(f"fit_params is not uniform, returning list.\n{e}")
+                    return_params = return_params.tolist()
+                    return_params.append(scan.fit_params)
+                    uniform = False
+            else:
+                return_params.append(scan.fit_params)
         return return_params[1:]
 
 

@@ -39,7 +39,7 @@ NORMAL = "\033[0m"
 
 def exp_package_help():
     print(
-        "fpack version 0.60\n"
+        "fpack version 0.70\n"
         "Most of the fpack module's functionality can be found from "
         "dir(fp) and dir(fp.Experiment). If you are using IPython "
         "or Jupyer, then further function descriptions can be found via "

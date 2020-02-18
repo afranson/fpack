@@ -20,8 +20,7 @@ fp.plot_tailor(x_label="this", grid=True, figsize=(15,5),
 fp.extract_data(exp_2_rotated, x_column=1, y_column=[4,5,6])
 """
 
-# TODO Make a Project class that can initialize multiple experiments and calculations across experiments.
-# TODO Add a fit_guide function to describe the basics of fitting with python.
+# TODO Make a Project class that can initialize multiple experiments calc across them.
 
 
 import os
@@ -35,24 +34,39 @@ import pandas as pd
 BLUE = "\033[94m"
 NORMAL = "\033[0m"
 
-# Do you want the main functions to help you?
-show_help = True
-
 # Helper Functions #
 
-if show_help:
+
+def exp_package_help():
     print(
         "fpack version 0.60\n"
-        # "Remove help via fp.show_help=False\n"
         "Most of the fpack module's functionality can be found from "
         "dir(fp) and dir(fp.Experiment). If you are using IPython "
         "or Jupyer, then further function descriptions can be found via "
         "fp.function? and fp.function?? (or fp.Experiment.function?)."
-        " Finally, source code can be found at print(fp.__file__)\n\n"
+        " Source code can be found at print(fp.__file__)\n"
+        "View other help with plot_package_help() and fit_package_help().\n\n"
         "Begin by creating an Experiment.\n"
-        "exp = fp.Experiment(r\"~/path/to/dir\" (or C:\\path\\to\\dir), "
-        "r\"[regex]*.[to\\d]?(_|-)[match]+\")"
+        'exp = fp.Experiment(r"~/path/to/dir" (or C:\\path\\to\\dir), '
+        'r"[regex]*.[to\\d]?(_|-)[match]+")'
+        "\n\n"
+        "After loading data, you can fit, plot, "
+        "and extract the loaded data easily.\n"
+        "The various exp.show_xxx() functions "
+        "reveal info about loaded files.\n"
+        "fp.plot_scans(exp) and the other "
+        "fp.plot_xxx(exp) functions to plot.\n"
+        "exp.get_xy_data() and other exp.get_xxx() "
+        "to retrieve information from the Experiment.\n"
+        "fp.fit_and_plot_fmr() fits a single file and "
+        "shows behind the scenes of the automated fitting.\n"
+        "fp.fit_fmr_exp()"
+        " will fit one or more scans manually or automatically.\n"
+        "fp.plot_fits() will plot fit(s) along with the data."
     )
+
+
+exp_package_help()
 
 
 def _pandas_error(exception):
@@ -68,25 +82,6 @@ def _pandas_error(exception):
         "default_data_start_row kwarg to Experiment.\n"
         "- Check that the data in your files is uniform.\n"
         f"\nPandas error below.\n{repr(exception)}"
-    )
-
-
-def _print_after_load():
-    print(
-        "Now you can examine, plot, "
-        "and extract the loaded data easily.\n"
-        "The various exp.show_xxx() functions "
-        "reveal info about loaded files.\n"
-        "fp.plot_scans(exp) and the other "
-        "fp.plot_xxx(exp) functions to plot.\n"
-        "fp.plot_package_help() for more info. \n"
-        "exp.get_xy_data() and other exp.get_xxx() "
-        "to retrieve information from the Experiment.\n"
-        "fp.fit_and_plot_fmr() fits a single file and "
-        "shows behind the scenes of the automated fitting.\n"
-        "fp.fit_fmr_exp()"
-        " will fit one or more scans manually or automatically.\n"
-        "fp.plot_fits() will plot fit(s) along with the data."
     )
 
 
@@ -266,7 +261,6 @@ class Experiment:
                 sep=sep,
                 **csv_kwargs,
             )
-            _print_after_load()
         else:
             print(
                 "Now add files to the experiment.\n"
@@ -482,8 +476,6 @@ class Experiment:
         )
         if show:
             self.show_files()
-        if show_help:
-            _print_after_load()
 
     def set_axes(self, *axis_labels):
         """Overrides the axes of the Experiment in the event of poor default
@@ -647,12 +639,16 @@ class Experiment:
                 values[n] = np.nan
                 continue
             try:
+                # Try to insert a single number
                 values[n] = fit_params[fit_param_indexes]
-            except TypeError:
+            except TypeError:  # more than one fit param index given
                 for m, i in enumerate(fit_param_indexes):
                     try:
                         values[n, m] = fit_params[i]
-                    except IndexError:
+                    except IndexError:  # if the ith value doesn't exist
+                        print(
+                            f"Warning: file {file_num} has insufficient fit.\nAsked for element {i} of fit_params which is : {fit_params}"
+                        )
                         values[n, m] = np.nan
         if len(file_numbers) == 1:
             return values[0]
@@ -772,6 +768,9 @@ class Experiment:
     #             self.add_scan(scan=scan)
 
     # ------- Fitting Manipulation ------- #
+
+    def get_fit_func(self, file_number):
+        return self.get_scan(file_number).fit_func
 
     def get_xy_fit(self, file_number, x_fit=None, x_column=None, x_density=1):
         if x_fit is None:

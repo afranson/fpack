@@ -3,16 +3,51 @@ and provide easy ways to visualize the fitting process.
 
 """
 
+import numpy as np
 from .experiment import Experiment
 from .lorentz_functions import (
     absorption_dispersion_mixed,
     absorption_dispersion_derivative_mixed,
 )
 from .plotting_core import plot_guess_and_fit, _xbaseline_to_ibaseline
-import numpy as np
 from scipy.optimize import curve_fit
 from scipy.interpolate import UnivariateSpline
 from .helper_functions import _get_smoothing, _get_cut
+
+
+def fit_package_help():
+    print(
+        "fit_exp(exp, func, *filenums) will fit various files "
+        "to func and place the fit info within the experiment."
+        " All fit info can be extracted via exp.get_metadata and"
+        "exp.get_xy_fit and exp.get_all_fit_params. Fit can be "
+        "easily plotted via fp.plot_scans(exp, *filenums, fit=True).\n"
+        "fit_fmr_exp(exp, *filenums, auto=n, derivative=bool) will fit "
+        "filenums to n lorentzians automatically (or manually if params)"
+        " is specified.\n"
+        "fit_and_plot_fmr(exp, filenum, auto=n, ...) will fit filenum to"
+        " n lorentzians and plot various automated fitting constructs to"
+        " help with troubleshooting automated fitting issues. Play with "
+        "the kwargs (shown via fit_and_plot_fmr?) to get a feel for how"
+        " the fit may be failing and how to fix it.\n"
+        "\n"
+        "General recipe for fitting:\n"
+        "from scipy.optimize import curve_fit"
+        "import numpy as np"
+        "import matplotlib.pyplot as plt"
+        "def fit_func(x, param0, param1, ...):\n"
+        "    return x * param0 + ... # your function definition to fit\n"
+        "params, cov = curve_fit(fit_func, x, y, ...) # get ... via curve_fit?"
+        "fp.plot(x, y) # plot the data you fit"
+        "x_fit = np.linspace(x[0], x[-1], n) # n is number of points you want"
+        " in x_fit\n"
+        "fp.plot(x_fit, func(x_fit, *params)) # it is import x_fit is a numpy"
+        " array.\n"
+        "# This next part plots the stderr of your fit as a shaded region.\n"
+        "stderr = np.sqrt(np.diag(cov))"
+        "plt.fill_between(x_fit, func(x_fit, *(params - stderr)), "
+        "func(x_fit, *(params + stderr)), alpha=0.3, color='k')"
+    )
 
 
 def _get_auto_params(

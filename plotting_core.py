@@ -1,8 +1,8 @@
-from .experiment import Experiment
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+from .experiment import Experiment
 from scipy.interpolate import UnivariateSpline
-import datetime
 from .helper_functions import (
     _get_smoothing,
     _get_cut,
@@ -26,9 +26,12 @@ def plot_savefig(filename, transparent=True, dpi=600, **kwargs):
     plt.savefig(filename, transparent=transparent, dpi=dpi, **kwargs)
 
 
-def clean_plot_data(x_data, y_data):
+def clean_plot_data(x_data, y_data, which_axis=-1):
     """Takes in data littered with Nones and returns cleaned data as two
     numpy arrays with the np.float datatype.
+
+    which_axis determines which axis (0 or 1) to check for np.nan values.
+    A value of -1 (default) checks and removes np.nan entries from both axes.
 
     """
     if len(x_data) != len(y_data):
@@ -37,7 +40,16 @@ def clean_plot_data(x_data, y_data):
             f"x is {len(x_data)} and y is {len(y_data)}."
         )
     combined = np.dstack((x_data, y_data))[0]
-    combined_cut = combined[np.isfinite(x_data) & np.isfinite(y_data)]
+    if which_axis == -1:
+        combined_cut = combined[np.isfinite(x_data) & np.isfinite(y_data)]
+    elif which_axis == 0:
+        combined_cut = combined[np.isfinite(x_data)]
+    elif which_axis == 1:
+        combined_cut = combined[np.isfinite(y_data)]
+    else:
+        raise ValueError(
+            "which_axis needs to be -1, 0, or 1. It is currently {which_axis}."
+        )
     return combined_cut[:, 0], combined_cut[:, 1]
 
 
@@ -220,6 +232,22 @@ def plot_package_help():
         "fp.plot_fits(exp, file_numbers)\n"
         "fp.plot_tailer(x_tick_values=, x_tick_sides=, x_label_sides=)\n\n"
         "fp.plot_metadata(exp, *file_numbers, x_regex=, y_regex=, etc.)"
+        "\n\n"
+        "To produce multiplot figures, the general template is:\n"
+        "fig = fp.figure(figsize=(w, h), dpi=n) # where w, h are in inches\n"
+        "# ** Create plot on axis in that figure **\n"
+        "ax = fig.add_subplot(111, label=unique) # Since you are positioning "
+        "the axis yourself, you don't need to worry about the 111. The label "
+        "just needs to be a unique number so that different axes don't "
+        "interfere with eachother.\n"
+        "fp.plot(x, y, you_know_the_drill) # yes, you can use fpack (no "
+        "matplotlib.pyplot import required for the basics!)\n"
+        "# ** Plot created **\n"
+        "fp.plot_tailor(ax=ax, set_position = [x0, y0, w, h]) # where all "
+        "are in terms of percentage of figure / 100. So an axis that uses "
+        "100% of the x dimension of your figure will have w = 1.\n"
+        "fp.plot_savefig(filename, transparent=bool, dpi=n) # where bool "
+        "decides if your figure and axes background is visible or not."
     )
 
 
@@ -243,7 +271,7 @@ def plot_manual_guide():
         "plt.text(x, y, 'text', fontsize=14)\n"
         "ax.set_position([x, y, w, h]) -- allows manual placement"
         " of axis within its figure\n"
-        "plt.savefig('name', transparent=True, dpi=DPI)\n"
+        "plt.plot_savefig('name', transparent=True, dpi=DPI)\n"
         "plt.gcf() -- get current figure || "
         "plt.gca() -- get current axis\n"
         "fig.patches.extend([plt.Rectangle((x, y), w, h,"
@@ -287,6 +315,7 @@ def plot_scans(
     y_column=None,
     integrate=False,
     xbaseline=(None, None),
+    ibaseline=(None, None),
     fit=False,
     guess=False,
     fmt="",
@@ -303,6 +332,11 @@ def plot_scans(
 
     fit=True to plot the fit for a set of scans
     """
+    if xbaseline != (None, None) and ibaseline != (None, None):
+        raise ValueError(
+            f"Please only specify either xbaseline OR ibaseline.\n"
+            f"Currently \nxbaseline = {xbaseline}\nibaseline = {ibaseline}"
+        )
     ax: plt.Axes
     fig, ax = _new_fig_andor_ax(
         new_fig=new_fig, new_ax=new_ax, figsize=figsize, dpi=dpi
@@ -328,7 +362,8 @@ def plot_scans(
                 file_number, x_column=x_column, y_column=y_column
             )
         if integrate:
-            i_baseline = _xbaseline_to_ibaseline(x_data, xbaseline)
+            if ibaseline == (None, None):
+                i_baseline = _xbaseline_to_ibaseline(x_data, xbaseline)
             y_data = np.cumsum(
                 y_data - np.average(y_data[i_baseline[0] : i_baseline[1]])
             )
@@ -356,7 +391,7 @@ def plot_scans(
 
     if metadata_title is not None:
         title = exp.get_metadata(
-            file_number,
+            file_numbers[0],
             regex=metadata_title,
             repl=repl,
             match_number=match_number,
@@ -473,7 +508,7 @@ def plot_guess_and_fit(
             linewidth=1,
         )
     except TypeError as e:
-        print(f"No fit data found\n{e}")
+        print(f"No fit data found for file {file_number}\n{e}")
 
     if auto:
         x_column, y_column = exp.check_xy_columns(x_column, y_column)
@@ -552,6 +587,7 @@ def plot_metadata(
     y_return_file_numbers=None,
     x_column=None,
     y_column=None,
+    which_axis=-1,
     new_fig=True,
     new_ax=False,
     figsize=(6.67, 4),
@@ -579,7 +615,7 @@ def plot_metadata(
         fit_param_indexes=y_fit_param_indexes,
         return_file_numbers=y_return_file_numbers,
     )
-    x_data, y_data = clean_plot_data(x_data, y_data)
+    x_data, y_data = clean_plot_data(x_data, y_data, which_axis=which_axis)
 
     fig, ax = _new_fig_andor_ax(
         new_fig=new_fig, new_ax=new_ax, figsize=figsize, dpi=dpi

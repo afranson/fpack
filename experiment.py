@@ -369,7 +369,7 @@ class Experiment:
         Entering no regex matches all files in that directory.
 
         """  # noqa
-        files = os.listdir(base_directory)
+        files = sorted(os.listdir(base_directory))
 
         if len(regexs) == 0:
             patterns = [re.compile("")]
@@ -658,17 +658,23 @@ class Experiment:
             return_array = return_array[0]
         return return_array
 
-    def get_fit_params(self, *file_numbers, fit_param_indices=None):
+    def get_fit_params(self, *file_numbers, fit_param_indices=None, stderr=None):
         file_numbers = self.check_file_numbers(file_numbers)
         if fit_param_indices is None:
             fit_param_indices = range(
                 self.get_scan(file_numbers[0]).fit_params.size
             )
         fit_param_indices = np.array(fit_param_indices)
-        values = np.zeros((len(file_numbers), len(fit_param_indices)))
+        try:
+            values = np.zeros((len(file_numbers), len(fit_param_indices)))
+        except TypeError:
+            values = np.zeros((len(file_numbers)))
         for n, file_num in enumerate(file_numbers):
             scan = self.get_scan(file_num)
-            fit_params = scan.fit_params
+            if stderr is not None:
+                fit_params = np.sqrt(np.diag(scan.fit_covariance))
+            else:
+                fit_params = scan.fit_params
             if fit_params is None:  # This file has no fit data
                 print(f"Warning: file {file_num} has no fit data.")
                 values[n] = np.nan
@@ -726,6 +732,7 @@ class Experiment:
         repl=r"\1",
         match_number=0,
         fit_param_indices=None,
+        stderr=None,
         return_file_numbers=None,
     ):
         """Extracts metadata from the filename and info of scans and prints it out in
@@ -758,7 +765,7 @@ class Experiment:
         file_numbers = self.check_file_numbers(file_numbers)
         if fit_param_indices is not None:
             return self.get_fit_params(
-                *file_numbers, fit_param_indices=fit_param_indices
+                *file_numbers, fit_param_indices=fit_param_indices, stderr=stderr
             )
 
         if return_file_numbers is not None:

@@ -20,6 +20,7 @@ fp.plot_tailor(x_label="this", grid=True, figsize=(15,5),
 fp.extract_data(exp_2_rotated, x_column=1, y_column=[4,5,6])
 """
 
+# TODO Add filename/ file number to fit_and_plot_fmr command - can it label itself? just change default?
 
 import os
 import re
@@ -48,6 +49,8 @@ def exp_package_help():
         "Begin by creating an Experiment.\n"
         'exp = fp.Experiment(r"~/path/to/dir" (or C:\\path\\to\\dir), '
         'r"[regex]*.[to\\d]?(_|-)[match]+")'
+        "Add and load extra files with\n"
+        "exp.load_files(same args as Experiment)"
         "\n\n"
         "After loading data, you can fit, plot, "
         "and extract the loaded data easily.\n"
@@ -55,14 +58,15 @@ def exp_package_help():
         "reveal info about loaded files.\n"
         "fp.plot_scans(exp) and the other "
         "fp.plot_xxx(exp) functions to plot.\n"
-        "exp.get_xy_data() and other exp.get_xxx() "
-        "to retrieve information from the Experiment.\n"
         "fp.fit_and_plot_fmr() fits a single file and "
         "shows behind the scenes of the automated fitting.\n"
         "fp.fit_fmr_exp()"
         " will fit one or more lorentzian scans manually or automatically.\n"
         "fp.fit_exp() will more generally fit to whatever function yo want.\n"
         "fp.plot_fits() will plot fit(s) along with the data."
+        "\n\n"
+        "exp.get_xy_data(), exp.get_data(), exp.get_fit_params() and other "
+        "exp.get_xxx() to retrieve information from the Experiment.\n"
     )
 
 
@@ -649,7 +653,7 @@ class Experiment:
     def get_fit_params(self, *file_numbers, fit_param_indices=None):
         file_numbers = self.check_file_numbers(file_numbers)
         if fit_param_indices is None:
-            fit_param_indices = range(self.get_scan(file_numbers[0]).fit_params.shape)
+            fit_param_indices = range(self.get_scan(file_numbers[0]).fit_params.size)
         fit_param_indices = np.array(fit_param_indices)
         values = np.zeros((len(file_numbers), len(fit_param_indices)))
         for n, file_num in enumerate(file_numbers):
@@ -661,14 +665,18 @@ class Experiment:
                 continue
             try:
                 values[n] = fit_params[fit_param_indices]
-            except IndexError:  # if the ith value doesn't exist
+            except IndexError:  # if some index doesn't exist
                 print(
                     f"Warning: file {file_num} has insufficient "
                     f"fit.\nAsked for elements {fit_param_indices} of "
                     f"fit_params which is : {fit_params}\n"
                     "Only returning valid values"
                 )
-                values[n] = fit_params[fit_param_indices[fit_param_indices < len(fit_params)]]
+                reduced_indices = fit_param_indices[fit_param_indices < len(fit_params)]
+                values[n, :len(reduced_indices)] = fit_params[reduced_indices]
+            except Exception:
+                reduced_size = len(fit_params)
+                values[n, :reduced_size] = fit_params
         if len(file_numbers) == 1:
             return values[0]
         return values

@@ -41,9 +41,10 @@ def exp_package_help():
         "Most of the fpack module's functionality can be found from "
         "dir(fp) and dir(fp.Experiment). If you are using IPython "
         "or Jupyer, then further function descriptions can be found via "
-        "fp.function? and fp.function?? (or fp.Experiment.function?)."
-        " Source code can be found at print(fp.__file__)\n"
-        "View other help with plot_package_help() and fit_package_help().\n\n"
+        "fp.function? and fp.function?? (or fp.Experiment.function?).\n"
+        "Source code can be found at print(fp.__file__)\n"
+        "View other help with plot_package_help() and fit_package_help()."
+        "\n\n"
         "Begin by creating an Experiment.\n"
         'exp = fp.Experiment(r"~/path/to/dir" (or C:\\path\\to\\dir), '
         'r"[regex]*.[to\\d]?(_|-)[match]+")'
@@ -59,7 +60,8 @@ def exp_package_help():
         "fp.fit_and_plot_fmr() fits a single file and "
         "shows behind the scenes of the automated fitting.\n"
         "fp.fit_fmr_exp()"
-        " will fit one or more scans manually or automatically.\n"
+        " will fit one or more lorentzian scans manually or automatically.\n"
+        "fp.fit_exp() will more generally fit to whatever function yo want.\n"
         "fp.plot_fits() will plot fit(s) along with the data."
     )
 
@@ -95,6 +97,8 @@ def _get_data_start(filename, *, lines_to_profile=100):
             active_delims = [d for d in delims if d in line]
             for delim in active_delims:
                 try:
+                    if delim == " ":
+                        delim = None
                     [float(x) for x in line.split(delim)]
                     nums_per_line[i] = len(line.split(delim))
                 except:  # noqa
@@ -320,7 +324,9 @@ class Experiment:
             self.scans.append(scan)
 
     def remove_scans(self, *file_numbers):
-        for n in reversed(file_numbers):
+        for n in reversed(sorted(file_numbers)):
+            filename = self.get_scan(n).filename
+            print(f"Removing file {n}: {filename}")
             del self.scans[n]
 
     def set_scan_params(
@@ -415,9 +421,11 @@ class Experiment:
                 ]
                 axes_line = f.readline()
                 if sep == "\s+":  # noqa
-                    axes = axes_line[:-1].split(" ")
+                    axes = axes_line[:-1].split()
                 else:
                     axes = axes_line[:-1].split(sep)
+                if len(axes) in [0, 1]:
+                    axes = ["x", "y1", "y2", "y3", "y4", "y5", "y6", "y7"]
                 self.set_scan_params(file_number, axes=axes)
                 read_csv_kwargs = {
                     "skiprows": data_start_row - axis_label_row - 1,
@@ -502,6 +510,7 @@ class Experiment:
         """Displays all files added to the Experiment.
 
         """
+        print("Remove unwanted files with exp.remove_files(n1, n2, ...)")
         print("Files loaded into data structure:")
         print(
             "\n".join(
@@ -614,21 +623,35 @@ class Experiment:
         """
         file_numbers = self.check_file_numbers(file_numbers)
         x_column, y_column = self.check_xy_columns(x_column, y_column)
-        return_array = []
-        for file_number in file_numbers:
+        return_array = np.zeros((len(file_numbers), 2, self.get_scan(file_numbers[0]).data.shape[1]))
+        for n, file_number in enumerate(file_numbers):
             data_to_extract = self.get_scan(file_number).data
             x_data = data_to_extract[x_column]
             y_data = data_to_extract[y_column]
-            return_array.append([x_data, y_data])
+            return_array[n] = [x_data, y_data]
         if len(file_numbers) == 1:
             return_array = return_array[0]
         return return_array
 
-    def _get_fit_params(self, *file_numbers, fit_param_indexes):
-        try:
-            values = np.zeros((len(file_numbers), len(fit_param_indexes)))
-        except TypeError:
-            values = np.zeros(len(file_numbers))
+    def get_data(self, *file_numbers):
+        """Returns the Experiment's x and y data for the specified column
+        numbers and files.
+
+        """
+        file_numbers = self.check_file_numbers(file_numbers)
+        return_array = np.zeros((len(file_numbers), *self.get_scan(file_numbers[0]).data.shape))
+        for n, file_number in enumerate(file_numbers):
+            return_array[n] = self.get_scan(file_number).data
+        if len(file_numbers) == 1:
+            return_array = return_array[0]
+        return return_array
+
+    def get_fit_params(self, *file_numbers, fit_param_indices=None):
+        file_numbers = self.check_file_numbers(file_numbers)
+        if fit_param_indices is None:
+            fit_param_indices = range(self.get_scan(file_numbers[0]).fit_params.shape)
+        fit_param_indices = np.array(fit_param_indices)
+        values = np.zeros((len(file_numbers), len(fit_param_indices)))
         for n, file_num in enumerate(file_numbers):
             scan = self.get_scan(file_num)
             fit_params = scan.fit_params
@@ -637,19 +660,15 @@ class Experiment:
                 values[n] = np.nan
                 continue
             try:
-                # Try to insert a single number
-                values[n] = fit_params[fit_param_indexes]
-            except TypeError:  # more than one fit param index given
-                for m, i in enumerate(fit_param_indexes):
-                    try:
-                        values[n, m] = fit_params[i]
-                    except IndexError:  # if the ith value doesn't exist
-                        print(
-                            f"Warning: file {file_num} has insufficient "
-                            f"fit.\nAsked for element {i} of fit_params "
-                            f"which is : {fit_params}"
-                        )
-                        values[n, m] = np.nan
+                values[n] = fit_params[fit_param_indices]
+            except IndexError:  # if the ith value doesn't exist
+                print(
+                    f"Warning: file {file_num} has insufficient "
+                    f"fit.\nAsked for elements {fit_param_indices} of "
+                    f"fit_params which is : {fit_params}\n"
+                    "Only returning valid values"
+                )
+                values[n] = fit_params[fit_param_indices[fit_param_indices < len(fit_params)]]
         if len(file_numbers) == 1:
             return values[0]
         return values
@@ -686,7 +705,7 @@ class Experiment:
         regex=r".*?(-?\d+(?:,\d+)*(?:e\d+)?(?:\.\d+(?:e\d+)?)?).*$",
         repl=r"\1",
         match_number=0,
-        fit_param_indexes=None,
+        fit_param_indices=None,
         return_file_numbers=None,
     ):
         """Extracts metadata from the filename and info of scans and prints it out in
@@ -717,9 +736,9 @@ class Experiment:
 
         """  # noqa
         file_numbers = self.check_file_numbers(file_numbers)
-        if fit_param_indexes is not None:
-            return self._get_fit_params(
-                *file_numbers, fit_param_indexes=fit_param_indexes
+        if fit_param_indices is not None:
+            return self.get_fit_params(
+                *file_numbers, fit_param_indices=fit_param_indices
             )
 
         if return_file_numbers is not None:
@@ -813,22 +832,6 @@ class Experiment:
         y_upper = func(x_fit, *(params + stderr))
         y_lower = func(x_fit, *(params - stderr))
         return x_fit, y_fit, y_lower, y_upper
-
-    def get_all_fit_params(self):
-        uniform = True
-        return_params = np.asarray(self.get_scan(0).fit_params)
-        for n, scan in enumerate(self):
-            if uniform:
-                try:
-                    return_params = np.vstack((return_params, scan.fit_params))
-                except ValueError as e:
-                    print(f"fit_params is not uniform, returning list.\n{e}")
-                    return_params = return_params.tolist()
-                    return_params.append(scan.fit_params)
-                    uniform = False
-            else:
-                return_params.append(scan.fit_params)
-        return return_params[1:]
 
 
 class EPR_Experiment(Experiment):

@@ -518,7 +518,7 @@ def plot_guess_and_fit(
         smoothing = _get_smoothing(y_data, smoothing)
         cut_range = _get_cut(x_data, y_data, xbaseline, cut_scale)
         y_cut = np.copy(y_data)
-        y_cut[(y_data >= cut_range[0]) & (y_data <= cut_range[1])] = 0
+        y_cut[(y_data >= cut_range[0]) & (y_data <= cut_range[1])] = y_data[0]
         cut_data = np.vstack((x_data, y_cut))
         ibaseline = _xbaseline_to_ibaseline(x_data, xbaseline)
         ifit_range = _xbaseline_to_ibaseline(x_data, xfit_range)

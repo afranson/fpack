@@ -37,7 +37,7 @@ def _xbaseline_to_ibaseline(x_data, xbaseline):
 def _get_smoothing(y, smoothing):
     if smoothing is not None:
         return smoothing
-    return 5000 / len(y)
+    return len(y)
 
 
 def _get_cut(x, y, xbaseline, cut_scale):

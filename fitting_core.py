@@ -67,7 +67,7 @@ def _get_auto_params(
     smoothing = _get_smoothing(y, smoothing)
     cut_range = _get_cut(x, y, xbaseline, cut_scale)
     y_cut = np.copy(y)
-    y_cut[(y >= cut_range[0]) & (y <= cut_range[1])] = 0
+    y_cut[(y >= cut_range[0]) & (y <= cut_range[1])] = y[0]
     cut_data = np.vstack((x, y_cut))
     if not derivative:
         integral = UnivariateSpline(cut_data[0], cut_data[1], k=5)
@@ -109,8 +109,8 @@ def fit_exp(
 ):
     """Allows for general fitting to *fit_func* across an entire Experiment.
     Currently uses scipy.curve_fit to fit specified data to the supplied
-    fit function. Typically, providing the *params* kwargs will be required
-    to get good fit results to anything more complex than linear fits.
+    fit function. Typically, providing the *p0* kwargs will be required
+    to get good fit results to anything more complex than polynomial fits.
 
     For advanced use, specify param_guess_func in the form:
     def guess_func(x, y, extra_param1, extra_param2):
@@ -127,6 +127,7 @@ def fit_exp(
         x_data, y_data = exp.get_xy_data(
             n, x_column=x_column, y_column=y_column
         )
+        fit_kwargs = dict()
         if param_guess_func is not None:
             params = param_guess_func(
                 x_data, y_data, **param_guess_func_params
@@ -134,7 +135,7 @@ def fit_exp(
             fit_kwargs = {
                 "p0": params,
             }
-            fit_kwargs.update(curve_fit_kwargs)
+        fit_kwargs.update(curve_fit_kwargs)
 
         popt, pcov = curve_fit(fit_func, x_data, y_data, **fit_kwargs)
         exp.get_scan(n).set_scan_params(

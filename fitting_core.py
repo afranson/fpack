@@ -82,8 +82,12 @@ def _get_auto_params(
     try:
         x_d = np.dstack((x_roots, derivs))[0][(derivs[0] > 0) :]
     except Exception as e:
-        print("Roots of spline: ", x_roots,
-              "\nRoots of derivative spline: ", derivs)
+        print(
+            "Roots of spline: ",
+            x_roots,
+            "\nRoots of derivative spline: ",
+            derivs,
+        )
         if x_roots == [] and derivs == []:
             print("Try decreasing cut_scale and/or smoothing.")
         raise e

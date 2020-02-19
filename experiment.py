@@ -627,7 +627,13 @@ class Experiment:
         """
         file_numbers = self.check_file_numbers(file_numbers)
         x_column, y_column = self.check_xy_columns(x_column, y_column)
-        return_array = np.zeros((len(file_numbers), 2, self.get_scan(file_numbers[0]).data.shape[1]))
+        return_array = np.zeros(
+            (
+                len(file_numbers),
+                2,
+                self.get_scan(file_numbers[0]).data.shape[1],
+            )
+        )
         for n, file_number in enumerate(file_numbers):
             data_to_extract = self.get_scan(file_number).data
             x_data = data_to_extract[x_column]
@@ -643,7 +649,9 @@ class Experiment:
 
         """
         file_numbers = self.check_file_numbers(file_numbers)
-        return_array = np.zeros((len(file_numbers), *self.get_scan(file_numbers[0]).data.shape))
+        return_array = np.zeros(
+            (len(file_numbers), *self.get_scan(file_numbers[0]).data.shape)
+        )
         for n, file_number in enumerate(file_numbers):
             return_array[n] = self.get_scan(file_number).data
         if len(file_numbers) == 1:
@@ -653,7 +661,9 @@ class Experiment:
     def get_fit_params(self, *file_numbers, fit_param_indices=None):
         file_numbers = self.check_file_numbers(file_numbers)
         if fit_param_indices is None:
-            fit_param_indices = range(self.get_scan(file_numbers[0]).fit_params.size)
+            fit_param_indices = range(
+                self.get_scan(file_numbers[0]).fit_params.size
+            )
         fit_param_indices = np.array(fit_param_indices)
         values = np.zeros((len(file_numbers), len(fit_param_indices)))
         for n, file_num in enumerate(file_numbers):
@@ -672,8 +682,10 @@ class Experiment:
                     f"fit_params which is : {fit_params}\n"
                     "Only returning valid values"
                 )
-                reduced_indices = fit_param_indices[fit_param_indices < len(fit_params)]
-                values[n, :len(reduced_indices)] = fit_params[reduced_indices]
+                reduced_indices = fit_param_indices[
+                    fit_param_indices < len(fit_params)
+                ]
+                values[n, : len(reduced_indices)] = fit_params[reduced_indices]
             except Exception:
                 reduced_size = len(fit_params)
                 values[n, :reduced_size] = fit_params

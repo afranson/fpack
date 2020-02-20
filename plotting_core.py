@@ -11,6 +11,64 @@ from .helper_functions import (
 )
 
 
+def plot_package_help():
+    print(
+        "Example of easy plotting with this package is:\n"
+        "fig = fp.figure() <= defaults to 2-column journal image at 150 dpi\n"
+        "fp.plot_scans(exp, *file_numbers (written as 1,2,3,... or blank for"
+        "all files))\n"
+        "fp.plot_tailer(x_label=, y_label=, set_position=, ...)\n"
+        "fp.plot_scans(exp, *other_files, new_fig=False, new_ax=False)\n"
+        "fp.plot_tailer(legend=True, x_lim=, y_lim=, ...)\n\n"
+        "fp.plot_fits(exp, file_numbers)\n"
+        "fp.plot_tailer(x_tick_values=, x_tick_sides=, x_label_sides=)\n\n"
+        "fp.plot_metadata(exp, *file_numbers, x_regex=, y_regex=, etc.)"
+        "\n\n"
+        "To produce multiplot figures, the general template is:\n"
+        "fig = fp.figure(figsize=(w, h), dpi=n) # where w, h are in inches\n"
+        "# ** Create plot on axis in that figure **\n"
+        "ax = fig.add_subplot(111, label=unique) # Since you are positioning "
+        "the axis yourself, you don't need to worry about the 111. The label "
+        "just needs to be a unique number so that different axes don't "
+        "interfere with eachother.\n"
+        "fp.plot(x, y, you_know_the_drill) # yes, you can use fpack (no "
+        "matplotlib.pyplot import required for the basics!)\n"
+        "# ** Plot created **\n"
+        "fp.plot_tailor(ax=ax, set_position = [x0, y0, w, h]) # where all "
+        "are in terms of percentage of figure / 100. So an axis that uses "
+        "100% of the x dimension of your figure will have w = 1.\n"
+        "fp.plot_savefig(filename, transparent=bool, dpi=n) # where bool "
+        "decides if your figure and axes background is visible or not."
+    )
+
+
+def plot_manual_guide():
+    print(
+        "Here are some of the usual functions used while "
+        "making proffesional looking plots in python.\n"
+        "This assume 'import matplotlib.pyplot as plt' "
+        "has already been entered.\n"
+        "plt.figure\n"
+        "plt.subplot\n"
+        "plt.xlabel\n"
+        "plt.ylabel\n"
+        "plt.ticklabel_format\n"
+        "plt.minorticks_on\n"
+        "plt.legend\n"
+        "plt.grid\n"
+        "plt.plot\n"
+        "plt.text\n"
+        "ax.set_position\n"
+        "plt.savefig\n"
+        "plt.gcf\n"
+        "plt.gca\n"
+        "plt.rc('text', usetex=True) -- use LaTeX to render all text"
+        "plt.rc('font', family='serif') -- font best matched to APL\n"
+        "plt.rc('text.latex',"
+        r"preamble=r'\usepackage{siunitx}, \usepackage{mathptmx}')"
+    )
+
+
 def show():
     """Just a wrapper for plt.show()
     """
@@ -26,7 +84,7 @@ def plot_savefig(filename, transparent=True, dpi=600, **kwargs):
     plt.savefig(filename, transparent=transparent, dpi=dpi, **kwargs)
 
 
-def clean_plot_data(x_data, y_data, which_axis=-1):
+def clean_plot_data(x_data, y_data, which_axis=None):
     """Takes in data littered with Nones and returns cleaned data as two
     numpy arrays with the np.float datatype.
 
@@ -40,7 +98,7 @@ def clean_plot_data(x_data, y_data, which_axis=-1):
             f"x is {len(x_data)} and y is {len(y_data)}."
         )
     combined = np.dstack((x_data, y_data))[0]
-    if which_axis == -1:
+    if which_axis is None:
         combined_cut = combined[np.isfinite(x_data) & np.isfinite(y_data)]
     elif which_axis == 0:
         combined_cut = combined[np.isfinite(x_data)]
@@ -90,37 +148,135 @@ def plot(
 # Include the ability to do log plots along various axes.
 
 
+def _tick_helper(
+    x_tick_values=None,
+    x_tick_labels=None,
+    x_tick_sides=(None, None),
+    x_tick_label_sides=(None, None),
+    y_tick_values=None,
+    y_tick_labels=None,
+    y_tick_sides=(None, None),
+    y_tick_label_sides=(None, None),
+    minor_ticks=True,
+    ticks_in_out_inout=(None, None),
+    tick_size=None,
+    science_ticks=None,
+    science_ticks_offset=None,
+):
+    if minor_ticks is True:
+        plt.minorticks_on()
+    elif minor_ticks is False:
+        plt.minorticks_off()
+    if ticks_in_out_inout != (None, None):
+        plt.tick_params(
+            axis="x",
+            direction=(ticks_in_out_inout[0])
+        )
+        plt.tick_params(
+            axis="y",
+            direction=(ticks_in_out_inout[1])
+        )
+    if tick_size is not None:
+        plt.tick_params(
+            axis="both",
+            labelsize=tick_size
+        )
+
+    if x_tick_sides != (None, None):
+        plt.tick_params(
+            bottom=x_tick_sides[0],
+            top=x_tick_sides[1]
+        )
+    if x_tick_label_sides != (None, None):
+        plt.tick_params(
+            labelbottom=x_tick_label_sides[0],
+            labeltop=x_tick_label_sides[1],
+        )
+    if y_tick_sides != (None, None):
+        plt.tick_params(
+            left=y_tick_sides[0],
+            right=y_tick_sides[1]
+        )
+    if y_tick_label_sides != (None, None):
+        plt.tick_params(
+            labelleft=y_tick_label_sides[0],
+            labelright=y_tick_label_sides[1],
+        )
+
+    if x_tick_values is not None:
+        plt.gca().xaxis.set_ticks(x_tick_values)
+    if x_tick_labels is not None:
+        plt.gca().xaxis.set_ticklabels(x_tick_labels)
+    if y_tick_values is not None:
+        plt.gca().yaxis.set_ticks(y_tick_values)
+    if y_tick_labels is not None:
+        plt.gca().yaxis.set_ticklabels(y_tick_labels)
+
+    if science_ticks is not None and x_tick_labels is None:
+        plt.ticklabel_format(
+            style="sci", scilimits=(-2, 4), axis="both", useOffset=science_ticks_offset
+        )
+    elif science_ticks is not None and x_tick_labels is not None:
+        print(
+            "Warning, x_tick_labels cannot be set "
+            "at the same time as science_ticks."
+        )
+
+
+def _label_helper(
+    x_label=None,
+    y_label=None,
+    label_positions=(None, None),
+    label_size=None,
+):
+    if x_label is not None:
+        plt.xlabel(x_label)
+    if y_label is not None:
+        plt.ylabel(y_label)
+    if label_size is not None:
+        x_text = plt.gca().xaxis.get_label().get_text()
+        y_text = plt.gca().yaxis.get_label().get_text()
+        plt.xlabel(x_text, fontsize=label_size)
+        plt.ylabel(y_text, fontsize=label_size)
+    if label_positions != (None, None):
+        plt.gca().xaxis.set_label_position(label_positions[0])
+        plt.gca().yaxis.set_label_position(label_positions[1])
+
+
 def plot_tailor(
     *,
     ax=None,
     x_label=None,
     y_label=None,
+    x_logscale=None,
+    y_logscale=None,
     x_lim=(None, None),
     y_lim=(None, None),
     title=None,
-    title_size=12,
+    title_size=None,
     legend=None,
-    legend_title="",
-    legend_loc=0,
+    legend_title=None,
+    legend_loc=None,
     legend_text=None,
-    legend_size=8,
-    legend_title_size=10,
-    legend_alpha=1,
-    grid=False,
+    legend_fontsize=None,
+    legend_alpha=None,
+    grid=None,
     x_tick_values=None,
     x_tick_labels=None,
-    x_tick_sides=(True, False),
-    x_tick_label_sides=(True, False),
+    x_tick_sides=(None, None),
+    x_tick_label_sides=(None, None),
     y_tick_values=None,
     y_tick_labels=None,
-    y_tick_sides=(True, False),
-    y_tick_label_sides=(True, False),
+    y_tick_sides=(None, None),
+    y_tick_label_sides=(None, None),
     minor_ticks=True,
-    ticks_in_out_inout=("out", "out"),
-    label_positions=("bottom", "left"),
-    label_size=10,
-    tick_size=8,
-    set_position=[0.1, 0.1, 0.88, 0.88],
+    ticks_in_out_inout=(None, None),
+    label_positions=(None, None),
+    label_size=None,
+    tick_size=None,
+    science_ticks=None,
+    science_ticks_offset=None,
+    set_position=None,
 ):
     """Performs a set of standard axes, labels, legends, and ticks
     manipulations to quickly and easily make plots look more
@@ -133,67 +289,57 @@ def plot_tailor(
             print(f"Failed to set current ax to {ax}")
 
     if legend is True:
-        legend = plt.legend(
-            loc=legend_loc,
-            fontsize=legend_size,
-            # title_fontsize=legend_title_size,
-            framealpha=legend_alpha,
-            title=legend_title,
-        )
-        if legend_text:
+        legend = plt.legend()
+        if legend_loc is not None:
+            plt.legend(loc=legend_loc)
+        if legend_fontsize is not None:
+            plt.legend(fontsize=legend_fontsize)
+        if legend_alpha is not None:
+            plt.legend(framealpha=legend_alpha)
+        if legend_title is not None:
+            plt.legend(title=legend_title)
+        if legend_text is not None:
             legend_texts = zip(legend.get_texts(), legend_text)
             [text_spot.set_text(text) for (text_spot, text) in legend_texts]
     elif legend is False:
         legend = plt.legend()
         legend.remove()
 
-    if grid:
+    if grid is not None:
         plt.grid(axis="both", which="both", alpha=0.25)
 
-    if minor_ticks:
-        plt.minorticks_on()
-    plt.tick_params(
-        axis="x",
-        direction=(ticks_in_out_inout[0]),
-        which="both",
-        bottom=x_tick_sides[0],
-        top=x_tick_sides[1],
-        labelbottom=x_tick_label_sides[0],
-        labeltop=x_tick_label_sides[1],
-        labelsize=tick_size,
-    )
-    plt.tick_params(
-        axis="y",
-        direction=(ticks_in_out_inout[1]),
-        which="both",
-        left=y_tick_sides[0],
-        right=y_tick_sides[1],
-        labelleft=y_tick_label_sides[0],
-        labelright=y_tick_label_sides[1],
-        labelsize=tick_size,
-    )
-    if x_tick_values:
-        plt.gca().xaxis.set_ticks(x_tick_values)
-    if x_tick_labels:
-        plt.gca().xaxis.set_ticklabels(x_tick_labels)
-    if y_tick_values:
-        plt.gca().yaxis.set_ticks(y_tick_values)
-    if y_tick_labels:
-        plt.gca().yaxis.set_ticklabels(y_tick_labels)
+    if x_logscale is not None:
+        plt.xscale("log")
+    if y_logscale is not None:
+        plt.yscale("log")
 
-    plt.ticklabel_format(
-        style="sci", scilimits=(-2, 4), axis="both", useOffset=False
-    )  # noqa
-    if x_label:
-        plt.xlabel(x_label, fontsize=label_size)
-    if y_label:
-        plt.ylabel(y_label, fontsize=label_size)
-    plt.gca().xaxis.set_label_position(label_positions[0])
-    plt.gca().yaxis.set_label_position(label_positions[1])
-    plt.gca().set_position([*set_position])
-    if title:
+    _tick_helper(
+        x_tick_values=x_tick_values,
+        x_tick_labels=x_tick_labels,
+        x_tick_sides=x_tick_sides,
+        x_tick_label_sides=x_tick_label_sides,
+        y_tick_values=y_tick_values,
+        y_tick_labels=y_tick_labels,
+        y_tick_sides=y_tick_sides,
+        y_tick_label_sides=y_tick_label_sides,
+        minor_ticks=minor_ticks,
+        ticks_in_out_inout=ticks_in_out_inout,
+        tick_size=tick_size,
+        science_ticks=science_ticks,
+        science_ticks_offset=science_ticks_offset
+    )
+
+    _label_helper(
+        x_label=x_label,
+        y_label=y_label,
+        label_positions=label_positions,
+        label_size=label_size,
+    )
+
+    if title is not None:
         plt.title(title, fontsize=title_size)
-
+    if set_position is not None:
+        plt.gca().set_position([*set_position])
     plt.xlim(*x_lim)
     plt.ylim(*y_lim)
 
@@ -219,69 +365,6 @@ def plot_xvline(exp: Experiment, point_number=None, x_value=None):
         plt.axvline(x_data[i])
         return i
 
-
-def plot_package_help():
-    print(
-        "Example of easy plotting with this package is:\n"
-        "fig = fp.figure() <= defaults to 2-column journal image at 150 dpi\n"
-        "fp.plot_scans(exp, *file_numbers (written as 1,2,3,... or blank for"
-        "all files))\n"
-        "fp.plot_tailer(x_label=, y_label=, set_position=, ...)\n"
-        "fp.plot_scans(exp, *other_files, new_fig=False, new_ax=False)\n"
-        "fp.plot_tailer(legend=True, x_lim=, y_lim=, ...)\n\n"
-        "fp.plot_fits(exp, file_numbers)\n"
-        "fp.plot_tailer(x_tick_values=, x_tick_sides=, x_label_sides=)\n\n"
-        "fp.plot_metadata(exp, *file_numbers, x_regex=, y_regex=, etc.)"
-        "\n\n"
-        "To produce multiplot figures, the general template is:\n"
-        "fig = fp.figure(figsize=(w, h), dpi=n) # where w, h are in inches\n"
-        "# ** Create plot on axis in that figure **\n"
-        "ax = fig.add_subplot(111, label=unique) # Since you are positioning "
-        "the axis yourself, you don't need to worry about the 111. The label "
-        "just needs to be a unique number so that different axes don't "
-        "interfere with eachother.\n"
-        "fp.plot(x, y, you_know_the_drill) # yes, you can use fpack (no "
-        "matplotlib.pyplot import required for the basics!)\n"
-        "# ** Plot created **\n"
-        "fp.plot_tailor(ax=ax, set_position = [x0, y0, w, h]) # where all "
-        "are in terms of percentage of figure / 100. So an axis that uses "
-        "100% of the x dimension of your figure will have w = 1.\n"
-        "fp.plot_savefig(filename, transparent=bool, dpi=n) # where bool "
-        "decides if your figure and axes background is visible or not."
-    )
-
-
-def plot_manual_guide():
-    print(
-        "Here are some of the usual functions used while "
-        "making proffesional looking plots in python.\n"
-        "This assume 'import matplotlib.pyplot as plt' "
-        "has already been entered.\n"
-        "fig = plt.figure(figsize=(x, y), dpi=DPI)\n"
-        "ax = plt.subplot(111, sharex=False, sharey=False)\n"
-        "plt.xlabel('XLabel', fontsize=20)\n"
-        "plt.ylabel('YLabel', fontsize=20)\n"
-        "plt.ticklabel_format(style='sci', scilimits=(-1,3),"
-        " axis='both', useOffset=False)\n"
-        "plt.minorticks_on()\n"
-        "plt.legend(loc=0, fontsize=13, title_fontsize=15,"
-        "framealpha=1, title='Title')\n"
-        "plt.grid(axis='both', which='both', alpha=0.25)\n"
-        "plt.plot(x_list, y_list, 'bo-', linewidth=1, markersize=1, alpha=1)\n"
-        "plt.text(x, y, 'text', fontsize=14)\n"
-        "ax.set_position([x, y, w, h]) -- allows manual placement"
-        " of axis within its figure\n"
-        "plt.plot_savefig('name', transparent=True, dpi=DPI)\n"
-        "plt.gcf() -- get current figure || "
-        "plt.gca() -- get current axis\n"
-        "fig.patches.extend([plt.Rectangle((x, y), w, h,"
-        " fill=True, color='w', alpha=1, zorder=1000,"
-        " transform=fig.transFigure, figure=fig)])\n"
-        "plt.rc('text', usetex=True) -- use LaTeX to render all text"
-        "plt.rc('font', family='serif') -- font best matched to APL\n"
-        "plt.rc('text.latex',"
-        r"preamble=r'\usepackage{siunitx}, \usepackage{mathptmx}')"
-    )
 
 
 def _new_fig_andor_ax(new_fig=True, new_ax=False, figsize=(6.69, 4), dpi=150):
@@ -587,7 +670,7 @@ def plot_metadata(
     y_return_file_numbers=None,
     x_column=None,
     y_column=None,
-    which_axis=-1,
+    which_axis=None,
     new_fig=True,
     new_ax=False,
     figsize=(6.67, 4),

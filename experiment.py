@@ -67,6 +67,9 @@ def exp_package_help():
         "\n\n"
         "exp.get_xy_data(), exp.get_data(), exp.get_fit_params() and other "
         "exp.get_xxx() to retrieve information from the Experiment.\n"
+        "Wherever a *file_numbers appears, leaving it blank will apply "
+        "all files in the experiment. Acquiring a certain range can be "
+        "done via *range(start, end + 1)."
     )
 
 

@@ -15,10 +15,10 @@ def plot_package_help():
     print(
         "Example of easy plotting with this package is:\n"
         "fig = fp.figure() <= defaults to 2-column journal image at 150 dpi\n"
-        "fp.plot_scans(exp, *file_numbers (written as 1,2,3,... or blank for"
+        "fp.plot_exp(exp, *file_numbers (written as 1,2,3,... or blank for"
         "all files))\n"
         "fp.plot_tailer(x_label=, y_label=, set_position=, ...)\n"
-        "fp.plot_scans(exp, *other_files, new_fig=False, new_ax=False)\n"
+        "fp.plot_exp(exp, *other_files, new_fig=False, new_ax=False)\n"
         "fp.plot_tailer(legend=True, x_lim=, y_lim=, ...)\n\n"
         "fp.plot_fits(exp, file_numbers)\n"
         "fp.plot_tailer(x_tick_values=, x_tick_sides=, x_label_sides=)\n\n"
@@ -382,10 +382,10 @@ def _new_fig_andor_ax(new_fig=True, new_ax=False, figsize=(6.69, 4), dpi=150):
 
 # Add plotting with waterfall offset labelled by some extracted number
 # - voltage for example [0, 1, 5, 10, 20]. Wrap heatmat into
-# plot_scans. Derivative and integral plotting by data and by spline.
+# plot_exp. Derivative and integral plotting by data and by spline.
 
 
-def plot_scans(
+def plot_exp(
     exp: Experiment,
     *file_numbers,
     new_fig=True,
@@ -499,7 +499,7 @@ def plot_fits(
     y_column=None,
     x_density=1,
 ):
-    plot_scans(
+    plot_exp(
         exp,
         *file_numbers,
         new_fig=new_fig,
@@ -512,7 +512,7 @@ def plot_fits(
         y_column=y_column,
         linewidth=1,
     )
-    plot_scans(
+    plot_exp(
         exp,
         *file_numbers,
         new_fig=False,
@@ -546,7 +546,7 @@ def plot_guess_and_fit(
     xfit_range=(None, None),
     auto=False,
 ):
-    plot_scans(
+    plot_exp(
         exp,
         file_number,
         new_fig=new_fig,
@@ -560,7 +560,7 @@ def plot_guess_and_fit(
         linewidth=1,
     )
     try:
-        plot_scans(
+        plot_exp(
             exp,
             file_number,
             new_fig=False,
@@ -576,7 +576,7 @@ def plot_guess_and_fit(
         )
         plt.gca().get_lines()[-1].set_zorder(10)
 
-        plot_scans(
+        plot_exp(
             exp,
             file_number,
             new_fig=False,

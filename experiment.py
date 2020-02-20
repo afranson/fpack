@@ -135,7 +135,7 @@ def show_files(base_directory, *regexs, show_all=False):
     regex matches all files in that directory.
 
     """  # noqa
-    files = os.listdir(base_directory)
+    files = sorted(os.listdir(base_directory))
 
     if len(regexs) == 0:
         patterns = [re.compile("")]

@@ -20,7 +20,7 @@ def plot_package_help():
         "fp.plot_tailer(x_label=, y_label=, set_position=, ...)\n"
         "fp.plot_exp(exp, *other_files, new_fig=False, new_ax=False)\n"
         "fp.plot_tailer(legend=True, x_lim=, y_lim=, ...)\n\n"
-        "fp.plot_fits(exp, file_numbers)\n"
+        "fp.plot_exp_fits(exp, file_numbers)\n"
         "fp.plot_tailer(x_tick_values=, x_tick_sides=, x_label_sides=)\n\n"
         "fp.plot_metadata(exp, *file_numbers, x_regex=, y_regex=, etc.)"
         "\n\n"
@@ -487,7 +487,7 @@ def plot_exp(
     plot_tailor(x_label=x_label, y_label=y_label, title=title)
 
 
-def plot_fits(
+def plot_exp_fits(
     exp: Experiment,
     *file_numbers,
     new_fig=True,

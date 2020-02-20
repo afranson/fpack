@@ -145,6 +145,17 @@ def plot(
     plt.plot(*args, **kwargs)
 
 
+def plot_werror(
+        *args, error=None, top_error=None, bottom_error=None, error_fmt="-r",  new_fig=True, new_ax=False, figsize=(6.67, 4), dpi=150, **kwargs,
+):
+    """Plots one set of list values (i.e. plot([x0, x1, x2], [y0, y1, y2]))
+    along with vertical error bars.
+    """
+    plot(*args, new_fig=new_fig, new_ax=new_ax, figsize=figsize, dpi=dpi, **kwargs)
+    x_values = *args[0]
+    y_values = *args[1]
+    plot([x_values]*2, [y_values - error, y_values + error], error_fmt, new_fig=False, **kwargs)
+
 # Include the ability to do log plots along various axes.
 
 

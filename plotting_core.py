@@ -84,9 +84,9 @@ def plot_savefig(filename, transparent=True, dpi=600, **kwargs):
     plt.savefig(filename, transparent=transparent, dpi=dpi, **kwargs)
 
 
-def clean_plot_data(x_data, y_data, which_axis=None):
-    """Takes in data littered with Nones and returns cleaned data as two
-    numpy arrays with the np.float datatype.
+def plot_clean_data(x_data, y_data, which_axis=None):
+    """Takes in data littered with Nones and np.nans and returns cleaned data
+    as two numpy arrays with the np.float datatype.
 
     which_axis determines which axis (0 or 1) to check for np.nan values.
     A value of -1 (default) checks and removes np.nan entries from both axes.
@@ -108,7 +108,15 @@ def clean_plot_data(x_data, y_data, which_axis=None):
         raise ValueError(
             "which_axis needs to be -1, 0, or 1. It is currently {which_axis}."
         )
-    return combined_cut[:, 0], combined_cut[:, 1]
+    try:
+        return_x = np.array(combined_cut[:,0], dtype='float')
+    except ValueError:
+        pass
+    try:
+        return_y = np.array(combined_cut[:,1], dtype='float')
+    except ValueError:
+        pass
+    return return_x, return_y
 
 
 def figure(*, column_width=2, height=4, figsize=None, dpi=150) -> plt.Figure:
@@ -146,15 +154,24 @@ def plot(
 
 
 def plot_werror(
-        *args, error=None, top_error=None, bottom_error=None, error_fmt="-r",  new_fig=True, new_ax=False, figsize=(6.67, 4), dpi=150, **kwargs,
+        *args, y_error=None, x_error=None, top_error=None, bottom_error=None, error_fmt="-r", error_label=None, new_fig=True, new_ax=False, figsize=(6.67, 4), dpi=150, **kwargs,
 ):
     """Plots one set of list values (i.e. plot([x0, x1, x2], [y0, y1, y2]))
     along with vertical error bars.
     """
     plot(*args, new_fig=new_fig, new_ax=new_ax, figsize=figsize, dpi=dpi, **kwargs)
-    x_values = *args[0]
-    y_values = *args[1]
-    plot([x_values]*2, [y_values - error, y_values + error], error_fmt, new_fig=False, **kwargs)
+    plt.gca().get_lines()[-1].set_zorder(10)
+    x_values = args[0]
+    y_values = args[1]
+    kwargs.update({"label": None})
+    if y_error is not None:
+        plot([x_values]*2, [y_values - y_error, y_values + y_error], error_fmt, new_fig=False, **kwargs)
+    if x_error is not None:
+        plot([x_values - x_error, x_values + x_error], [y_values]*2, error_fmt, new_fig=False, **kwargs)
+    if top_error is not None and bottom_error is not None:
+        plot([x_values]*2, [y_values - bottom_error, y_values + top_error], error_fmt, new_fig=False, **kwargs)
+    if error_label is not None:
+        plot([], [], error_fmt, label=error_label, new_fig=False, **kwargs)
 
 # Include the ability to do log plots along various axes.
 
@@ -170,7 +187,7 @@ def _tick_helper(
     y_tick_label_sides=(None, None),
     minor_ticks=True,
     ticks_in_out_inout=(None, None),
-    tick_size=None,
+    tick_fontsize=None,
     science_ticks=None,
     science_ticks_offset=None,
 ):
@@ -187,10 +204,10 @@ def _tick_helper(
             axis="y",
             direction=(ticks_in_out_inout[1])
         )
-    if tick_size is not None:
+    if tick_fontsize is not None:
         plt.tick_params(
             axis="both",
-            labelsize=tick_size
+            labelsize=tick_fontsize
         )
 
     if x_tick_sides != (None, None):
@@ -238,17 +255,17 @@ def _label_helper(
     x_label=None,
     y_label=None,
     label_positions=(None, None),
-    label_size=None,
+    label_fontsize=None,
 ):
     if x_label is not None:
         plt.xlabel(x_label)
     if y_label is not None:
         plt.ylabel(y_label)
-    if label_size is not None:
+    if label_fontsize is not None:
         x_text = plt.gca().xaxis.get_label().get_text()
         y_text = plt.gca().yaxis.get_label().get_text()
-        plt.xlabel(x_text, fontsize=label_size)
-        plt.ylabel(y_text, fontsize=label_size)
+        plt.xlabel(x_text, fontsize=label_fontsize)
+        plt.ylabel(y_text, fontsize=label_fontsize)
     if label_positions != (None, None):
         plt.gca().xaxis.set_label_position(label_positions[0])
         plt.gca().yaxis.set_label_position(label_positions[1])
@@ -259,12 +276,14 @@ def plot_tailor(
     ax=None,
     x_label=None,
     y_label=None,
+    label_positions=(None, None),
+    label_fontsize=None,
     x_logscale=None,
     y_logscale=None,
     x_lim=(None, None),
     y_lim=(None, None),
     title=None,
-    title_size=None,
+    title_fontsize=None,
     legend=None,
     legend_title=None,
     legend_loc=None,
@@ -282,9 +301,7 @@ def plot_tailor(
     y_tick_label_sides=(None, None),
     minor_ticks=True,
     ticks_in_out_inout=(None, None),
-    label_positions=(None, None),
-    label_size=None,
-    tick_size=None,
+    tick_fontsize=None,
     science_ticks=None,
     science_ticks_offset=None,
     set_position=None,
@@ -335,7 +352,7 @@ def plot_tailor(
         y_tick_label_sides=y_tick_label_sides,
         minor_ticks=minor_ticks,
         ticks_in_out_inout=ticks_in_out_inout,
-        tick_size=tick_size,
+        tick_fontsize=tick_fontsize,
         science_ticks=science_ticks,
         science_ticks_offset=science_ticks_offset
     )
@@ -344,11 +361,11 @@ def plot_tailor(
         x_label=x_label,
         y_label=y_label,
         label_positions=label_positions,
-        label_size=label_size,
+        label_fontsize=label_fontsize,
     )
 
     if title is not None:
-        plt.title(title, fontsize=title_size)
+        plt.title(title, fontsize=title_fontsize)
     if set_position is not None:
         plt.gca().set_position([*set_position])
     plt.xlim(*x_lim)
@@ -368,14 +385,13 @@ def get_index(data, x_value, row=0):
 
 def plot_xvline(exp: Experiment, point_number=None, x_value=None):
     x_data, _ = exp.get_xy_data(0)
-    if point_number:
+    if point_number is not None:
         plt.axvline(x_data[point_number])
         return x_data[point_number]
     elif x_value is not None:
         i = _x_to_index(x_data, x_value)
         plt.axvline(x_data[i])
         return i
-
 
 
 def _new_fig_andor_ax(new_fig=True, new_ax=False, figsize=(6.69, 4), dpi=150):
@@ -415,8 +431,8 @@ def plot_exp(
     fmt="",
     x_density=1,
     skip_points=1,
-    metadata_label=None,
-    metadata_title=None,
+    label_regex=None,
+    title_regex=None,
     repl=r"\1",
     match_number=0,
     **plot_kw,
@@ -424,7 +440,26 @@ def plot_exp(
     """General purpose plotting function to plot several plots (or one)
     all on one figure.
 
-    fit=True to plot the fit for a set of scans
+    -waterfall=n will plot each scan offset from the previous scan by n.
+    -fit=True to plot the fit for a set of scans
+    -guess=True to plot guesses for a set of scans
+    -(i,x)baseline=(n0, n1) sets the baseline to subtract when integrating
+    data. ibaseline is given by indexes. xbaseline is given in terms of x
+    values.
+    -fmt="b" sets the format string of the plot
+    -x_density=1 sets the relative density of points to plot fits with
+    relative to the density of x values from the data.
+    -skip_points=1 sets the number of points to skip when plotting. Helpful
+    for very large datasets when you want to plot a smaller number of points.
+    A value of 10 will plot 1 out of every 10 points, for example.
+    -label_regex is a regular expression that is used to extract the label
+    from either the filename or info.
+    -title_regex is a regular expression that is used to extract the title
+    of the plot for either the filename or info.
+    -repl is part of the re.subs() function that determines what exactly the
+    above two regex expressions return to the plot.
+    -match_number is an int to be used when multiple matches are found for a
+    given regex.
     """
     if xbaseline != (None, None) and ibaseline != (None, None):
         raise ValueError(
@@ -465,10 +500,10 @@ def plot_exp(
         if waterfall:
             y_data = y_data - y_data[0] + n * waterfall
 
-        if metadata_label is not None:
+        if label_regex is not None:
             label = exp.get_metadata(
                 file_number,
-                regex=metadata_label,
+                regex=label_regex,
                 repl=repl,
                 match_number=match_number,
             )
@@ -483,10 +518,10 @@ def plot_exp(
             **plot_kw,
         )
 
-    if metadata_title is not None:
+    if title_regex is not None:
         title = exp.get_metadata(
             file_numbers[0],
-            regex=metadata_title,
+            regex=title_regex,
             repl=repl,
             match_number=match_number,
         )
@@ -666,57 +701,6 @@ def plot_guess_and_fit(
     )
 
 
-def plot_metadata(
-    exp: Experiment,
-    *file_numbers,
-    x_regex=r".*?(-?\d+(?:,\d+)*(?:e\d+)?(?:\.\d+(?:e\d+)?)?).*$",
-    x_repl=r"\1",
-    x_match_number=0,
-    x_fit_param_indexes=None,
-    x_return_file_numbers=None,
-    y_regex=r".*?(-?\d+(?:,\d+)*(?:e\d+)?(?:\.\d+(?:e\d+)?)?).*$",
-    y_repl=r"\1",
-    y_match_number=0,
-    y_fit_param_indexes=None,
-    y_return_file_numbers=None,
-    x_column=None,
-    y_column=None,
-    which_axis=None,
-    new_fig=True,
-    new_ax=False,
-    figsize=(6.67, 4),
-    dpi=150,
-    fmt="",
-    **plot_kw,
-):
-    """Plots items found from fits, filename, file_number, and info (scan
-    parameters found at start of file) against eachother.
-
-    """
-    x_data = exp.get_metadata(
-        *file_numbers,
-        regex=x_regex,
-        repl=x_repl,
-        match_number=x_match_number,
-        fit_param_indexes=x_fit_param_indexes,
-        return_file_numbers=x_return_file_numbers,
-    )
-    y_data = exp.get_metadata(
-        *file_numbers,
-        regex=y_regex,
-        repl=y_repl,
-        match_number=y_match_number,
-        fit_param_indexes=y_fit_param_indexes,
-        return_file_numbers=y_return_file_numbers,
-    )
-    x_data, y_data = clean_plot_data(x_data, y_data, which_axis=which_axis)
-
-    fig, ax = _new_fig_andor_ax(
-        new_fig=new_fig, new_ax=new_ax, figsize=figsize, dpi=dpi
-    )
-    ax.plot(x_data, y_data, fmt, **plot_kw)
-
-
 def plot_heatmap(
     exp: Experiment,
     *file_numbers,
@@ -726,9 +710,8 @@ def plot_heatmap(
     dpi=150,
     x_column=None,
     y_column=None,
-    y_metrics=[0, 0, 0],
-    y_scale=1,
-    y_offset=0,
+    y_m=1,
+    y_b=0,
     y_data=None,
     cmap=None,
     cbar_label="cbar_label",
@@ -744,7 +727,7 @@ def plot_heatmap(
     x_data, _ = exp.get_xy_data(file_numbers[0], x_column=x_column)
     if y_data is None:
         y_data = np.arange(
-            y_offset, y_offset + y_scale * (len(file_numbers) + 1), y_scale
+            y_b, y_b + y_m * (len(file_numbers) + 1), y_m
         )
         z_data = np.zeros((len(file_numbers), len(x_data)))
 
@@ -764,53 +747,6 @@ def plot_heatmap(
     plot_options.update(plot_option_kwargs)
 
     plot_tailor(**plot_options)
-
-
-def plot_two_axes(
-    exp: Experiment,
-    file_1,
-    file_2,
-    x_column_1=None,
-    y_column_1=None,
-    x_column_2=None,
-    y_column_2=None,
-):
-    x_column_1, y_column_1 = exp.check_xy_columns(x_column_1, y_column_1)
-    x_column_2, y_column_2 = exp.check_xy_columns(x_column_2, y_column_2)
-
-    x_data1, y_data1 = exp.get_xy_data(
-        file_1, x_column=x_column_1, y_column=y_column_1
-    )  # noqa
-    x_data2, y_data2 = exp.get_xy_data(
-        file_2, x_column=x_column_2, y_column=y_column_2
-    )  # noqa
-
-    fig = figure()
-    ax1 = fig.add_subplot(211)
-    ax1.plot(x_data1, y_data1, label="File " + str(file_1))
-    plot_tailor(
-        legend_loc=2,
-        x_label=exp.get_scan[file_1].axes[x_column_1],
-        y_label=exp.get_scan[file_1].axes[y_column_1],
-        set_position=[0.1, 0.1, 0.8, 0.88],
-    )
-
-    ax2 = fig.add_subplot(212)
-    ax2.patch.set_alpha(0)
-    ax2.plot(x_data2, y_data2, "r", label="File " + str(file_2))
-    plot_tailor(
-        legend_loc=1,
-        x_label=exp.get_scan(file_2).axes[x_column_2],
-        y_label=exp.get_scan(file_2).axes[y_column_2],
-        label_position=("top", "right"),
-        tick_positions=(True, False, False, True),
-        tick_labels=(True, False, False, True),
-        set_position=[0.1, 0.1, 0.8, 0.88],
-    )
-
-
-# Needs to remove right axis from first plot, only as y-axis to right
-# side. Just one x axis - no plotting second x axis.
 
 
 def plot_add_y(x_data, y_data, **plot_kw):

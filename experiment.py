@@ -38,7 +38,7 @@ NORMAL = "\033[0m"
 
 def exp_package_help():
     print(
-        "fpack version 0.70\n"
+        "fpack version 0.80\n"
         "Most of the fpack module's functionality can be found from "
         "dir(fp) and dir(fp.Experiment). If you are using IPython "
         "or Jupyer, then further function descriptions can be found via "
@@ -71,8 +71,6 @@ def exp_package_help():
         "all files in the experiment. Acquiring a certain range can be "
         "done via *range(start, end + 1)."
     )
-
-
 exp_package_help()
 
 

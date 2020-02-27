@@ -20,8 +20,6 @@ fp.plot_tailor(x_label="this", grid=True, figsize=(15,5),
 fp.extract_data(exp_2_rotated, x_column=1, y_column=[4,5,6])
 """
 
-# TODO Add filename/ file number to fit_and_plot_fmr command - can it label itself? just change default?
-
 import os
 import re
 import numpy as np
@@ -480,6 +478,9 @@ class Experiment:
         except TypeError:  # Move on if dill_file is None
             pass
         self.add_files(base_directory, *regexs)
+        if len(self.scans) == 0:
+            print("Warning: No files read into experiment.")
+            return
         self.read_files(
             descriptive_rows=descriptive_rows,
             axis_label_row=axis_label_row,

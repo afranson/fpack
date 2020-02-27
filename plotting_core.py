@@ -75,13 +75,18 @@ def show():
     plt.show()
 
 
-def plot_savefig(filename, transparent=True, dpi=600, **kwargs):
+def plot_savefig(filename, transparent=True, dpi=600, bbox_inches="tight", **kwargs):
     """Uses plt.savefig with better defaults.
 
     transparent = True : No white background behind figure.
     dpi = 600          : Recommended minimum dpi for published graphics.
     """
-    plt.savefig(filename, transparent=transparent, dpi=dpi, **kwargs)
+    if bbox_inches == "tight":
+        print(
+            "Warning: bbox_inches=\"tight\" will change figure dimensions."
+            "\nSet bbox_inches=None to recover dimensions set in fp.figure."
+        )
+    plt.savefig(filename, transparent=transparent, dpi=dpi, bbox_inches=bbox_inches, **kwargs)
 
 
 def clean_plot_data(x_data, y_data, which_axis=None):
@@ -159,9 +164,10 @@ def _tick_helper(
     y_tick_label_sides=(None, None),
     minor_ticks=True,
     ticks_in_out_inout=(None, None),
-    tick_size=None,
+    tick_fontsize=None,
     science_ticks=None,
     science_ticks_offset=None,
+    science_ticks_limits=None,
 ):
     if minor_ticks is True:
         plt.minorticks_on()
@@ -176,10 +182,10 @@ def _tick_helper(
             axis="y",
             direction=(ticks_in_out_inout[1])
         )
-    if tick_size is not None:
+    if tick_fontsize is not None:
         plt.tick_params(
             axis="both",
-            labelsize=tick_size
+            labelsize=tick_fontsize
         )
 
     if x_tick_sides != (None, None):
@@ -213,9 +219,14 @@ def _tick_helper(
         plt.gca().yaxis.set_ticklabels(y_tick_labels)
 
     if science_ticks is not None and x_tick_labels is None:
-        plt.ticklabel_format(
-            style="sci", scilimits=(-2, 4), axis="both", useOffset=science_ticks_offset
-        )
+        if science_ticks_limits is None:
+            plt.ticklabel_format(
+                style="sci", scilimits=(-2, 4), axis="both", useOffset=science_ticks_offset
+            )
+        else:
+            plt.ticklabel_format(
+                style="sci", scilimits=science_ticks_limits, axis="both", useOffset=science_ticks_offset
+            )
     elif science_ticks is not None and x_tick_labels is not None:
         print(
             "Warning, x_tick_labels cannot be set "
@@ -227,17 +238,17 @@ def _label_helper(
     x_label=None,
     y_label=None,
     label_positions=(None, None),
-    label_size=None,
+    label_fontsize=None,
 ):
     if x_label is not None:
         plt.xlabel(x_label)
     if y_label is not None:
         plt.ylabel(y_label)
-    if label_size is not None:
+    if label_fontsize is not None:
         x_text = plt.gca().xaxis.get_label().get_text()
         y_text = plt.gca().yaxis.get_label().get_text()
-        plt.xlabel(x_text, fontsize=label_size)
-        plt.ylabel(y_text, fontsize=label_size)
+        plt.xlabel(x_text, fontsize=label_fontsize)
+        plt.ylabel(y_text, fontsize=label_fontsize)
     if label_positions != (None, None):
         plt.gca().xaxis.set_label_position(label_positions[0])
         plt.gca().yaxis.set_label_position(label_positions[1])
@@ -253,7 +264,7 @@ def plot_tailor(
     x_lim=(None, None),
     y_lim=(None, None),
     title=None,
-    title_size=None,
+    title_fontsize=None,
     legend=None,
     legend_title=None,
     legend_loc=None,
@@ -272,10 +283,12 @@ def plot_tailor(
     minor_ticks=True,
     ticks_in_out_inout=(None, None),
     label_positions=(None, None),
-    label_size=None,
-    tick_size=None,
+    label_fontsize=None,
+    tick_fontsize=None,
     science_ticks=None,
     science_ticks_offset=None,
+    science_ticks_limits=None,
+    ax_patches_visible=None,
     set_position=None,
 ):
     """Performs a set of standard axes, labels, legends, and ticks
@@ -324,20 +337,23 @@ def plot_tailor(
         y_tick_label_sides=y_tick_label_sides,
         minor_ticks=minor_ticks,
         ticks_in_out_inout=ticks_in_out_inout,
-        tick_size=tick_size,
+        tick_fontsize=tick_fontsize,
         science_ticks=science_ticks,
-        science_ticks_offset=science_ticks_offset
+        science_ticks_offset=science_ticks_offset,
+        science_ticks_limits=science_ticks_limits,
     )
 
     _label_helper(
         x_label=x_label,
         y_label=y_label,
         label_positions=label_positions,
-        label_size=label_size,
+        label_fontsize=label_fontsize,
     )
+    if ax_patches_visible is not None:
+        plt.gca().patch.set_visible(False)
 
     if title is not None:
-        plt.title(title, fontsize=title_size)
+        plt.title(title, fontsize=title_fontsize)
     if set_position is not None:
         plt.gca().set_position([*set_position])
     plt.xlim(*x_lim)

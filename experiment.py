@@ -69,6 +69,8 @@ def exp_package_help():
         "all files in the experiment. Acquiring a certain range can be "
         "done via *range(start, end + 1)."
     )
+
+
 exp_package_help()
 
 
@@ -660,7 +662,9 @@ class Experiment:
             return_array = return_array[0]
         return return_array
 
-    def get_fit_params(self, *file_numbers, fit_param_indices=None, stderr=None):
+    def get_fit_params(
+        self, *file_numbers, fit_param_indices=None, stderr=None
+    ):
         file_numbers = self.check_file_numbers(file_numbers)
         if fit_param_indices is None:
             fit_param_indices = range(
@@ -767,7 +771,9 @@ class Experiment:
         file_numbers = self.check_file_numbers(file_numbers)
         if fit_param_indices is not None:
             return self.get_fit_params(
-                *file_numbers, fit_param_indices=fit_param_indices, stderr=stderr
+                *file_numbers,
+                fit_param_indices=fit_param_indices,
+                stderr=stderr,
             )
 
         if return_file_numbers is not None:

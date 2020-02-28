@@ -11,6 +11,7 @@ and provide easy ways to visualize the fitting process.
 # sampler.run_mcmc(p0, 1e4)
 
 import numpy as np
+
 # import emcee
 from .experiment import Experiment
 from .lorentz_functions import (
@@ -67,8 +68,9 @@ def fit_package_help():
 # def fit_emcee(
 #         model, theta, x, y, yerr,
 # ):
+#
 #     sigma_sq = yerr ** 2
-#     pos = s
+#     pos =
 
 #     sampler = emcee.EnsembleSampler(
 #         nwalkers,
@@ -79,6 +81,11 @@ def fit_package_help():
 
 #     sampler.run_mcmc(None, 5000, progress=True)
 #     return sampler
+
+# def _extract_from_emcee_fit(
+#         sampler
+# ):
+#     k
 
 
 def _get_auto_params(

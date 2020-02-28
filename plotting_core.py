@@ -75,7 +75,9 @@ def show():
     plt.show()
 
 
-def plot_savefig(filename, transparent=True, dpi=600, bbox_inches="tight", **kwargs):
+def plot_savefig(
+    filename, transparent=True, dpi=600, bbox_inches="tight", **kwargs
+):
     """Uses plt.savefig with better defaults.
 
     transparent = True : No white background behind figure.
@@ -83,10 +85,16 @@ def plot_savefig(filename, transparent=True, dpi=600, bbox_inches="tight", **kwa
     """
     if bbox_inches == "tight":
         print(
-            "Warning: bbox_inches=\"tight\" will change figure dimensions."
+            'Warning: bbox_inches="tight" will change figure dimensions.'
             "\nSet bbox_inches=None to recover dimensions set in fp.figure."
         )
-    plt.savefig(filename, transparent=transparent, dpi=dpi, bbox_inches=bbox_inches, **kwargs)
+    plt.savefig(
+        filename,
+        transparent=transparent,
+        dpi=dpi,
+        bbox_inches=bbox_inches,
+        **kwargs,
+    )
 
 
 def plot_clean_data(x_data, y_data, which_axis=None):
@@ -114,11 +122,11 @@ def plot_clean_data(x_data, y_data, which_axis=None):
             "which_axis needs to be -1, 0, or 1. It is currently {which_axis}."
         )
     try:
-        return_x = np.array(combined_cut[:,0], dtype='float')
+        return_x = np.array(combined_cut[:, 0], dtype="float")
     except ValueError:
         pass
     try:
-        return_y = np.array(combined_cut[:,1], dtype='float')
+        return_y = np.array(combined_cut[:, 1], dtype="float")
     except ValueError:
         pass
     return return_x, return_y
@@ -159,24 +167,61 @@ def plot(
 
 
 def plot_werror(
-        *args, y_error=None, x_error=None, top_error=None, bottom_error=None, error_fmt="-r", error_label=None, new_fig=True, new_ax=False, figsize=(6.67, 4), dpi=150, **kwargs,
+    *args,
+    y_error=None,
+    x_error=None,
+    top_error=None,
+    bottom_error=None,
+    error_fmt="-r",
+    error_label=None,
+    new_fig=True,
+    new_ax=False,
+    figsize=(6.67, 4),
+    dpi=150,
+    **kwargs,
 ):
     """Plots one set of list values (i.e. plot([x0, x1, x2], [y0, y1, y2]))
     along with vertical error bars.
     """
-    plot(*args, new_fig=new_fig, new_ax=new_ax, figsize=figsize, dpi=dpi, **kwargs)
+    plot(
+        *args,
+        new_fig=new_fig,
+        new_ax=new_ax,
+        figsize=figsize,
+        dpi=dpi,
+        **kwargs,
+    )
     plt.gca().get_lines()[-1].set_zorder(10)
     x_values = args[0]
     y_values = args[1]
     kwargs.update({"label": None})
     if y_error is not None:
-        plot([x_values]*2, [y_values - y_error, y_values + y_error], error_fmt, new_fig=False, **kwargs)
+        plot(
+            [x_values] * 2,
+            [y_values - y_error, y_values + y_error],
+            error_fmt,
+            new_fig=False,
+            **kwargs,
+        )
     if x_error is not None:
-        plot([x_values - x_error, x_values + x_error], [y_values]*2, error_fmt, new_fig=False, **kwargs)
+        plot(
+            [x_values - x_error, x_values + x_error],
+            [y_values] * 2,
+            error_fmt,
+            new_fig=False,
+            **kwargs,
+        )
     if top_error is not None and bottom_error is not None:
-        plot([x_values]*2, [y_values - bottom_error, y_values + top_error], error_fmt, new_fig=False, **kwargs)
+        plot(
+            [x_values] * 2,
+            [y_values - bottom_error, y_values + top_error],
+            error_fmt,
+            new_fig=False,
+            **kwargs,
+        )
     if error_label is not None:
         plot([], [], error_fmt, label=error_label, new_fig=False, **kwargs)
+
 
 # Include the ability to do log plots along various axes.
 
@@ -202,39 +247,22 @@ def _tick_helper(
     elif minor_ticks is False:
         plt.minorticks_off()
     if ticks_in_out_inout != (None, None):
-        plt.tick_params(
-            axis="x",
-            direction=(ticks_in_out_inout[0])
-        )
-        plt.tick_params(
-            axis="y",
-            direction=(ticks_in_out_inout[1])
-        )
+        plt.tick_params(axis="x", direction=(ticks_in_out_inout[0]))
+        plt.tick_params(axis="y", direction=(ticks_in_out_inout[1]))
     if tick_fontsize is not None:
-        plt.tick_params(
-            axis="both",
-            labelsize=tick_fontsize
-        )
+        plt.tick_params(axis="both", labelsize=tick_fontsize)
 
     if x_tick_sides != (None, None):
-        plt.tick_params(
-            bottom=x_tick_sides[0],
-            top=x_tick_sides[1]
-        )
+        plt.tick_params(bottom=x_tick_sides[0], top=x_tick_sides[1])
     if x_tick_label_sides != (None, None):
         plt.tick_params(
-            labelbottom=x_tick_label_sides[0],
-            labeltop=x_tick_label_sides[1],
+            labelbottom=x_tick_label_sides[0], labeltop=x_tick_label_sides[1],
         )
     if y_tick_sides != (None, None):
-        plt.tick_params(
-            left=y_tick_sides[0],
-            right=y_tick_sides[1]
-        )
+        plt.tick_params(left=y_tick_sides[0], right=y_tick_sides[1])
     if y_tick_label_sides != (None, None):
         plt.tick_params(
-            labelleft=y_tick_label_sides[0],
-            labelright=y_tick_label_sides[1],
+            labelleft=y_tick_label_sides[0], labelright=y_tick_label_sides[1],
         )
 
     if x_tick_values is not None:
@@ -249,11 +277,17 @@ def _tick_helper(
     if science_ticks is not None and x_tick_labels is None:
         if science_ticks_limits is None:
             plt.ticklabel_format(
-                style="sci", scilimits=(-2, 4), axis="both", useOffset=science_ticks_offset
+                style="sci",
+                scilimits=(-2, 4),
+                axis="both",
+                useOffset=science_ticks_offset,
             )
         else:
             plt.ticklabel_format(
-                style="sci", scilimits=science_ticks_limits, axis="both", useOffset=science_ticks_offset
+                style="sci",
+                scilimits=science_ticks_limits,
+                axis="both",
+                useOffset=science_ticks_offset,
             )
     elif science_ticks is not None and x_tick_labels is not None:
         print(
@@ -312,8 +346,6 @@ def plot_tailor(
     y_tick_label_sides=(None, None),
     minor_ticks=True,
     ticks_in_out_inout=(None, None),
-    label_positions=(None, None),
-    label_fontsize=None,
     tick_fontsize=None,
     science_ticks=None,
     science_ticks_offset=None,
@@ -744,9 +776,7 @@ def plot_heatmap(
 
     x_data, _ = exp.get_xy_data(file_numbers[0], x_column=x_column)
     if y_data is None:
-        y_data = np.arange(
-            y_b, y_b + y_m * (len(file_numbers) + 1), y_m
-        )
+        y_data = np.arange(y_b, y_b + y_m * (len(file_numbers) + 1), y_m)
         z_data = np.zeros((len(file_numbers), len(x_data)))
 
     for n, file_number in enumerate(file_numbers):

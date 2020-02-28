@@ -75,13 +75,18 @@ def show():
     plt.show()
 
 
-def plot_savefig(filename, transparent=True, dpi=600, **kwargs):
+def plot_savefig(filename, transparent=True, dpi=600, bbox_inches="tight", **kwargs):
     """Uses plt.savefig with better defaults.
 
     transparent = True : No white background behind figure.
     dpi = 600          : Recommended minimum dpi for published graphics.
     """
-    plt.savefig(filename, transparent=transparent, dpi=dpi, **kwargs)
+    if bbox_inches == "tight":
+        print(
+            "Warning: bbox_inches=\"tight\" will change figure dimensions."
+            "\nSet bbox_inches=None to recover dimensions set in fp.figure."
+        )
+    plt.savefig(filename, transparent=transparent, dpi=dpi, bbox_inches=bbox_inches, **kwargs)
 
 
 def plot_clean_data(x_data, y_data, which_axis=None):
@@ -190,6 +195,7 @@ def _tick_helper(
     tick_fontsize=None,
     science_ticks=None,
     science_ticks_offset=None,
+    science_ticks_limits=None,
 ):
     if minor_ticks is True:
         plt.minorticks_on()
@@ -241,9 +247,14 @@ def _tick_helper(
         plt.gca().yaxis.set_ticklabels(y_tick_labels)
 
     if science_ticks is not None and x_tick_labels is None:
-        plt.ticklabel_format(
-            style="sci", scilimits=(-2, 4), axis="both", useOffset=science_ticks_offset
-        )
+        if science_ticks_limits is None:
+            plt.ticklabel_format(
+                style="sci", scilimits=(-2, 4), axis="both", useOffset=science_ticks_offset
+            )
+        else:
+            plt.ticklabel_format(
+                style="sci", scilimits=science_ticks_limits, axis="both", useOffset=science_ticks_offset
+            )
     elif science_ticks is not None and x_tick_labels is not None:
         print(
             "Warning, x_tick_labels cannot be set "
@@ -301,9 +312,13 @@ def plot_tailor(
     y_tick_label_sides=(None, None),
     minor_ticks=True,
     ticks_in_out_inout=(None, None),
+    label_positions=(None, None),
+    label_fontsize=None,
     tick_fontsize=None,
     science_ticks=None,
     science_ticks_offset=None,
+    science_ticks_limits=None,
+    ax_patches_visible=None,
     set_position=None,
 ):
     """Performs a set of standard axes, labels, legends, and ticks
@@ -354,7 +369,8 @@ def plot_tailor(
         ticks_in_out_inout=ticks_in_out_inout,
         tick_fontsize=tick_fontsize,
         science_ticks=science_ticks,
-        science_ticks_offset=science_ticks_offset
+        science_ticks_offset=science_ticks_offset,
+        science_ticks_limits=science_ticks_limits,
     )
 
     _label_helper(
@@ -363,6 +379,8 @@ def plot_tailor(
         label_positions=label_positions,
         label_fontsize=label_fontsize,
     )
+    if ax_patches_visible is not None:
+        plt.gca().patch.set_visible(False)
 
     if title is not None:
         plt.title(title, fontsize=title_fontsize)

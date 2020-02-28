@@ -21,6 +21,7 @@ fp.extract_data(exp_2_rotated, x_column=1, y_column=[4,5,6])
 """
 
 # TODO Add filename/ file number to fit_and_plot_fmr command - can it label itself? just change default?
+# TODO Add emcee support for fitting
 
 import os
 import re

@@ -3,7 +3,15 @@ and provide easy ways to visualize the fitting process.
 
 """
 
+# log likelihood is -0.5 * sum( (y-f(...)) / sn^2 + ln(2 pi sn^2) )
+# ivar = 1. / np.random.rand(ndim)
+# ndim, nwalkers = 5, 100
+# p0 = np.random.randn(nwalkers, ndim)
+# sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=[ivar])
+# sampler.run_mcmc(p0, 1e4)
+
 import numpy as np
+# import emcee
 from .experiment import Experiment
 from .lorentz_functions import (
     absorption_dispersion_mixed,
@@ -54,6 +62,23 @@ def fit_package_help():
         " of the desired fit parameters.\n"
         "Then post-processing and plotting is left entirely to the user."
     )
+
+
+# def fit_emcee(
+#         model, theta, x, y, yerr,
+# ):
+#     sigma_sq = yerr ** 2
+#     pos = s
+
+#     sampler = emcee.EnsembleSampler(
+#         nwalkers,
+#         ndim,
+#         lambda *args: -0.5 * np.sum((y - model) ** 2 / sigma_sq + np.log(sigma_sq)),
+#         args=(x, y, yerr),
+#     )
+
+#     sampler.run_mcmc(None, 5000, progress=True)
+#     return sampler
 
 
 def _get_auto_params(

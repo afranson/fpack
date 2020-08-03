@@ -36,7 +36,7 @@ NORMAL = "\033[0m"
 
 def exp_package_help():
     print(
-        "fpack version 0.80\n"
+        "fpack version 0.90\n"
         "Most of the fpack module's functionality can be found from "
         "dir(fp) and dir(fp.Experiment). If you are using IPython "
         "or Jupyer, then further function descriptions can be found via "
@@ -60,7 +60,7 @@ def exp_package_help():
         "shows behind the scenes of the automated fitting.\n"
         "fp.fit_fmr_exp()"
         " will fit one or more lorentzian scans manually or automatically.\n"
-        "fp.fit_exp() will more generally fit to whatever function yo want.\n"
+        "fp.fit_exp() will more generally fit to whatever function you want.\n"
         "fp.plot_fits() will plot fit(s) along with the data."
         "\n\n"
         "exp.get_xy_data(), exp.get_data(), exp.get_fit_params() and other "
@@ -328,7 +328,7 @@ class Experiment:
         else:
             self.scans.append(scan)
 
-    def remove_scans(self, *file_numbers):
+    def remove_files(self, *file_numbers):
         for n in reversed(sorted(file_numbers)):
             filename = self.get_scan(n).filename
             print(f"Removing file {n}: {filename}")

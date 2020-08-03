@@ -247,19 +247,19 @@ def _tick_helper(
     elif minor_ticks is False:
         plt.minorticks_off()
     if ticks_in_out_inout != (None, None):
-        plt.tick_params(axis="x", direction=(ticks_in_out_inout[0]))
-        plt.tick_params(axis="y", direction=(ticks_in_out_inout[1]))
+        plt.tick_params(axis="x", which="both", direction=(ticks_in_out_inout[0]))
+        plt.tick_params(axis="y", which="both", direction=(ticks_in_out_inout[1]))
     if tick_fontsize is not None:
         plt.tick_params(axis="both", labelsize=tick_fontsize)
 
     if x_tick_sides != (None, None):
-        plt.tick_params(bottom=x_tick_sides[0], top=x_tick_sides[1])
+        plt.tick_params(which="both", bottom=x_tick_sides[0], top=x_tick_sides[1])
     if x_tick_label_sides != (None, None):
         plt.tick_params(
             labelbottom=x_tick_label_sides[0], labeltop=x_tick_label_sides[1],
         )
     if y_tick_sides != (None, None):
-        plt.tick_params(left=y_tick_sides[0], right=y_tick_sides[1])
+        plt.tick_params(which="both", left=y_tick_sides[0], right=y_tick_sides[1])
     if y_tick_label_sides != (None, None):
         plt.tick_params(
             labelleft=y_tick_label_sides[0], labelright=y_tick_label_sides[1],
@@ -636,8 +636,8 @@ def plot_guess_and_fit(
     y_column=None,
     x_density=1,
     xbaseline=(None, None),
-    cut_scale=1,
-    smoothing=1,
+    cut_scale=None,
+    smoothing=None,
     derivative=True,
     xfit_range=(None, None),
     auto=False,
@@ -694,10 +694,10 @@ def plot_guess_and_fit(
         x_data, y_data = exp.get_xy_data(
             file_number, x_column=x_column, y_column=y_column
         )
-        smoothing = _get_smoothing(y_data, smoothing)
+        smoothing = _get_smoothing(x_data, y_data, smoothing)
         cut_range = _get_cut(x_data, y_data, xbaseline, cut_scale)
         y_cut = np.copy(y_data)
-        y_cut[(y_data >= cut_range[0]) & (y_data <= cut_range[1])] = y_data[0]
+        y_cut[(y_data >= cut_range[0]) & (y_data <= cut_range[1])] = np.mean(y_data)
         cut_data = np.vstack((x_data, y_cut))
         ibaseline = _xbaseline_to_ibaseline(x_data, xbaseline)
         ifit_range = _xbaseline_to_ibaseline(x_data, xfit_range)

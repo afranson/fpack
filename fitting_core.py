@@ -96,10 +96,10 @@ def _get_auto_params(
     xbaseline=(None, None),
     smoothing=None,
 ):
-    smoothing = _get_smoothing(y, smoothing)
+    smoothing = _get_smoothing(x, y, smoothing)
     cut_range = _get_cut(x, y, xbaseline, cut_scale)
     y_cut = np.copy(y)
-    y_cut[(y >= cut_range[0]) & (y <= cut_range[1])] = y[0]
+    y_cut[(y >= cut_range[0]) & (y <= cut_range[1])] = np.mean(y)
     cut_data = np.vstack((x, y_cut))
     if not derivative:
         integral = UnivariateSpline(cut_data[0], cut_data[1], k=5)
@@ -227,7 +227,7 @@ def fit_fmr_exp(
             n, x_column=x_column, y_column=y_column
         )
         ifit_range = _xbaseline_to_ibaseline(x_data, xfit_range)
-        if auto:
+        if auto is not None:
             params = _get_auto_params(
                 x_data,
                 y_data,
@@ -276,8 +276,12 @@ def fit_fmr_exp(
         else:
             err_list = None
 
-        params = [item for sublist in params for item in sublist]
-        params.insert(0, offset)
+        try:
+            params = [item for sublist in params for item in sublist]
+            params.insert(0, offset)
+        except TypeError:
+            params = params
+            params.insert(0, offset)
 
         fit_kwargs = {
             "p0": params,

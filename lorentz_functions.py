@@ -31,11 +31,11 @@ def absorption_derivative(x, aHeight=1, FWHM=0.1, x0=3):
     derivative is constructed for height and FWHM to have independent
     effects on the lorentzian.
 
-                                          3
+                                           3
                                 -32⋅√3⋅FWHM ⋅aHeight⋅(x - x₀)
     absorption_derivative(x) =  ──────────────────────────────
                                                        2
-                                 ⎛    2             2⎞
+                                  ⎛    2             2⎞
                                 9⋅⎝FWHM  + 4⋅(x - x₀) ⎠
 
     """
@@ -65,7 +65,7 @@ def dispersion_derivative(x, dHeight=1, FWHM=0.1, x0=3):
     effects on the dispersion derivative.
 
 
-                                    2         ⎛    2             2⎞
+                                     2         ⎛    2             2⎞
                                 -FWHM ⋅dHeight⋅⎝FWHM  - 4⋅(x - x₀) ⎠
     dispersion_derivative(x) =  ─────────────────────────────────────
                                                               2
